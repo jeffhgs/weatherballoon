@@ -1,6 +1,6 @@
 rm -f "/tmp/heartbeat"
 
-cat > /tmp/heartbeat.sh <<"EOF"
+cat > /tmp/heartbeat.sh <<"EOF1"
 #!/bin/bash
 set -e
 
@@ -33,10 +33,41 @@ then
 else
   log "heartbeat ok"
 fi
-EOF
+EOF1
 install /tmp/heartbeat.sh /usr/local/bin/heartbeat.sh
 rm /tmp/heartbeat.sh
 
 echo "* * * * * /usr/local/bin/heartbeat.sh" > /tmp/heartbeat.cron
 crontab -u root /tmp/heartbeat.cron
 rm /tmp/heartbeat.cron
+
+
+
+cat > /tmp/with_heartbeat.sh <<"EOF2"
+
+afileHeartbeat=/tmp/heartbeat
+afileGtimeout=/usr/bin/timeout
+afileTouch=/usr/bin/touch
+durationMax="$1"
+shift
+
+cmd="$@"
+"$afileGtimeout" --foreground ${durationMax} ${cmd[*]} &
+pid=$!
+status="0"
+if [[ "${pid}" ]]
+then
+  while [[ "$status" == "0" ]]
+  do
+    "$afileTouch" "$afileHeartbeat"
+    ps ${pid} 1> /dev/null 2> /dev/null
+    status="$?"
+    #echo pid=${pid} status=${status}
+    sleep 2
+  done
+fi
+#echo exiting
+EOF2
+
+sudo install /tmp/with_heartbeat.sh /usr/local/bin/with_heartbeat.sh
+rm -f /tmp/with_heartbeat.sh
