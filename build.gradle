@@ -2,12 +2,23 @@ task wrapper(type: Wrapper) {
     gradleVersion = '3.1'
 }
 
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
+    }
+}
+
 repositories {
     mavenCentral()
 }
 
 apply plugin: 'scala'
 apply plugin:'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+
 
 dependencies {
     compile 'org.scala-lang:scala-library:2.11.8'
@@ -31,3 +42,9 @@ task(run1, type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
+shadowJar {
+    mainClassName = 'com.groovescale.Run1'
+    baseName = 'weatherballoon_shadow'
+    classifier = null
+    version = null
+}
