@@ -125,7 +125,7 @@ object ExecUtil {
         log.info(s"connection, try ${iTries} of ${numTries}")
       }
       // TODO: make ExecUtil not depend on ImplAws
-      AwsProvisioner.tryFindNode(group1, region, tag, cred) match {
+      AwsProvisioner.tryFindNode(region, tag, cred) match {
         case Some((node,addr)) =>
           val value = execViaSsh(addr, username, pkfile, sConnectTimeout, command)
           if(!dryRun) {

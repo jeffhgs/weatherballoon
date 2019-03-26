@@ -66,7 +66,6 @@ object AwsProvisioner {
                            tags:Seq[Tag])
 
   def listNodesViaAws(
-                       group1 : String,
                        region: String,
                        cred : config.AwsCred
                      ) : Seq[NodeMetadata] =
@@ -91,13 +90,12 @@ object AwsProvisioner {
   }
 
   def tryFindNode(
-                   group1:String,
                    region:String,
                    tag:String,
                    cred:config.AwsCred
                  ) : Option[(NodeMetadata,String)] =
   {
-    val nodesRemoter1 = listNodesViaAws(group1, region, cred).filter(node =>
+    val nodesRemoter1 = listNodesViaAws(region, cred).filter(node =>
       (node.tags.exists(t => t.getKey.equals(tag)) &&
         (node.status == "running" || node.status == "pending"))
     )
@@ -133,7 +131,7 @@ object AwsProvisioner {
       SyncUtil.rcloneUp(cfg)
 
       var nodeaddr : Option[(NodeMetadata,String)] = None
-      tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred) match {
+      tryFindNode(cfg.region, cfg.tag, cfg.cred) match {
         case Some((node, addr)) =>
           nodeaddr = Some((node, addr))
         // do nothing
@@ -142,7 +140,7 @@ object AwsProvisioner {
           log.info("looks like we should make a node")
           provisionViaAws(cfg.region, cfg.group1, cfg.keyPair, cfg.instanceType, cfg.os.username, cfg.os.ami, cfg.tag, cfg.roleOfInstance, cfg.cred)
           Thread.sleep(10000)
-          tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred) match {
+          tryFindNode(cfg.region, cfg.tag, cfg.cred) match {
             case Some((node, addr)) =>
               // now there will eventually be a node
               nodeaddr = Some((node, addr))

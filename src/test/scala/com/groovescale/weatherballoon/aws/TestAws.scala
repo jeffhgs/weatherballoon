@@ -36,7 +36,7 @@ class TestAws extends JUnitSuite {
                      cfg:config.Remoter
                    ) =
   {
-    val nodes = AwsProvisioner.listNodesViaAws(cfg.group1, cfg.region, cfg.cred)
+    val nodes = AwsProvisioner.listNodesViaAws(cfg.region, cfg.cred)
     log.info(s">> No of nodes ${nodes.size}")
     for (node <- nodes) {
       log.info(">>>>  " + node)
@@ -49,7 +49,7 @@ class TestAws extends JUnitSuite {
                     cfg:config.Remoter
                   ) =
   {
-    val node = AwsProvisioner.tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred)
+    val node = AwsProvisioner.tryFindNode(cfg.region, cfg.tag, cfg.cred)
     log.info(">>>>  " + node)
   }
 
