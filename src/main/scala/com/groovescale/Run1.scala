@@ -305,8 +305,6 @@ object Run1 {
   }
 
   def testProvisionRun(cmd0:Array[String], cfg:config.Remoter) = {
-    log.info("hello")
-
     val idrun = System.currentTimeMillis()
     val cmd1 = cmd0.mkString(" ")
     val cmd2 =
@@ -344,8 +342,6 @@ object Run1 {
           }
       }
       execAndRetry(cfg.os.username, pkfile, "echo hello", cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
-      log.info("about to sync")
-      //rsync(nodeaddr.get._2, cfg)
       execAndRetry(cfg.os.username, pkfile, cmd2, cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
     } catch {
       case ex:Throwable =>
