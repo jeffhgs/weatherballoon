@@ -108,6 +108,18 @@ object Run1 {
       yield(NodeMetadata(addrs, status, tags))
   }
 
+  val tmpPumpOnce = new Array[Byte](1024)
+  def pumpOnce(in:InputStream, os:OutputStream) : Unit = {
+    if(in.available > 0) {
+      log.info("trying to read")
+      val i = in.read(tmpPumpOnce, 0, 1024)
+      if (i < 0) {
+        log.info("available input has no input.  Error?")
+        return
+      }
+      System.out.print(new String(tmpPumpOnce, 0, i))
+    }
+  }
   def pump(channel: Channel, in: InputStream) : Unit = {
     val tmp = new Array[Byte](1024)
     while (true) {
@@ -144,10 +156,12 @@ object Run1 {
     import java.io.PipedInputStream
     import java.io.PipedOutputStream
     val in = new PipedInputStream
-    val pin = new PipedOutputStream(in.asInstanceOf[PipedInputStream])
+    val pin = new PipedOutputStream(in)
 
     channel.setInputStream(in)
-    channel.setOutputStream(System.out)
+    val out = new PipedOutputStream()
+    val pout = new PipedInputStream(out)
+    channel.setOutputStream(out)
 
     channel.connect(3 * 1000)
     pin.write(command.getBytes)
@@ -155,6 +169,7 @@ object Run1 {
     pin.write("exit\n".getBytes())
     pin.flush()
     while(!channel.isClosed) {
+      pumpOnce(pout, System.out)
       log.info("sleeping")
       Thread.sleep(1000)
     }
