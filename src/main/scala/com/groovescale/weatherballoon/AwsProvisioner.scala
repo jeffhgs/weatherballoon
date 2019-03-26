@@ -27,7 +27,7 @@ object AwsProvisioner {
     import java.nio.charset.StandardCharsets
     import java.util.Base64
     val encoder = Base64.getEncoder
-    val normalString = getUserdataScriptRaw().mkString("\n")
+    val normalString = UserdataUtil.getUserdataScriptRaw().mkString("\n")
     val encodedString = encoder.encodeToString(normalString.getBytes(StandardCharsets.UTF_8))
 
     runInstancesRequest
@@ -58,21 +58,6 @@ object AwsProvisioner {
     val result = amazonEC2Client.runInstances(
       runInstancesRequest)
     result.getReservation()
-  }
-
-  private def getUserdataScript(res:String) : Seq[String] = {
-    val str = getClass().getResourceAsStream(res)
-    val r = new BufferedReader(new InputStreamReader(str))
-    r.lines().iterator().asScala.toSeq
-  }
-
-  private def getUserdataScriptRaw() : Seq[String] = {
-    val scriptBig = Seq(
-      "/file/install_heartbeat_cron.sh",
-      "/file/install_deps.sh"
-    ).flatMap(getUserdataScript)
-    val lines = (Seq("#!/usr/bin/env bash") ++ scriptBig)
-    lines
   }
 
   case class NodeMetadata(
