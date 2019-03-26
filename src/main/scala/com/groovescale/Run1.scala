@@ -124,6 +124,8 @@ object Run1 {
   def execViaSshImplJsch2(session:Session, command:String) : Try[Int] = {
     //log.info("connected via jsch")
     val chan = session.openChannel("exec")
+    // If we don't allocate a pty, sshd will not know to kill our process if we ctrl+C weatherballoon
+    chan.asInstanceOf[ChannelExec].setPty(true)
     //log.info(s"setting command: ${command}")
     chan.asInstanceOf[ChannelExec].setCommand(command)
     val is = chan.getInputStream
