@@ -1,20 +1,15 @@
 package com.groovescale.weatherballoon.aws
 
-import java.io.{File, PrintWriter, StringWriter}
-
 import com.groovescale.weatherballoon._
 import org.scalatest.junit.JUnitSuite
 
 import scala.collection.mutable.ListBuffer
-import org.junit.Assert._
 import org.junit.Test
 import org.junit.Before
 import org.slf4j.LoggerFactory
 
 class TestAws extends JUnitSuite {
   val log = LoggerFactory.getLogger(classOf[TestAws])
-
-  import scala.collection.JavaConverters._
 
   var sb: StringBuilder = _
   var lb: ListBuffer[String] = _
@@ -76,10 +71,6 @@ class TestAws extends JUnitSuite {
   }
 
 
-  //    testListNodes(cfg)
-  //    testFindNode(cfg)
-  //    testProvision(cfg)
-  //    testSsh(cfg)
   @Test def verifyListNodes(): Unit = {
     val cfg = ConfigUtil.getCfg()
     testListNodes(cfg)

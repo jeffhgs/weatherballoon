@@ -3,8 +3,6 @@ package com.groovescale.weatherballoon
 import java.io.{InputStream, OutputStream, PipedInputStream, PipedOutputStream}
 import java.util.Properties
 
-import com.groovescale.weatherballoon.AwsProvisioner.log
-import com.groovescale.weatherballoon.Main.log
 import com.jcraft.jsch.{ChannelExec, JSch, Session}
 import org.slf4j.LoggerFactory
 

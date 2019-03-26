@@ -2,7 +2,6 @@ package com.groovescale.weatherballoon
 
 import java.io.File
 
-import com.groovescale.weatherballoon.Main.log
 import org.slf4j.LoggerFactory
 
 object ConfigUtil {

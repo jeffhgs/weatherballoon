@@ -5,7 +5,6 @@ import java.io._
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model._
-import com.groovescale.weatherballoon.Main.{getClass, log}
 import org.slf4j.LoggerFactory
 
 object AwsProvisioner {
