@@ -3,6 +3,10 @@
 
 Weatherballoon: The fastest inexpensive way to get your new experiment into the clouds.
 
+![](doc/Shot_from_High_Altitude_Ballon_with_Lake_Michigan.JPG)
+
+Image from a hobby high-altitude balloon.  Image copyright [Noah Klugman](https://en.wikipedia.org/wiki/High-altitude_balloon#/media/File:Shot_from_High_Altitude_Ballon_with_Lake_Michigan.JPG)
+
 # Synopsis
 
 Weatherballoon takes any local machine command line run/test command and efficiently offloads the command's execution to cloud compute resources.  Weatherballoon is especially well adapted to use with high end cloud computing resources, such as using cloud instances equipped with specialized GPU/TPU hardware to run deep learning model training.
