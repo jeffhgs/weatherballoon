@@ -54,13 +54,13 @@ Weatherballoon takes any local machine command line run/test command and efficie
 
 ## Prerequisites
 
-Current local prerequisites are:
+Current prerequisites for the local machine are:
 
-  - JRE 1.8
-  - One portable third-party binary (rclone, a golang based cloud file synchronizer)
+  - JDK 1.8
+  - One portable third-party binary ([rclone](https://github.com/ncw/rclone), a golang based cloud file synchronizer)
   - Credentials on one cloud compute service
 
-Current remote OS prerequisites are:
+Current prerequisites for the remote compute image are:
 
   - Ubuntu linux is the target test OS.  Other linux-based distributions may work but are not currently tested.
 
@@ -71,7 +71,7 @@ Current supported cloud compute services are:
 ## Installation Instructions
 
   - 1 - Unzip the distribution (currently 3 files) into a location in your path
-  - 2 - Install rclone
+  - 2 - Install [rclone](https://github.com/ncw/rclone)
   - 3 - run weatherballoon.sh
 
 ## Usage
