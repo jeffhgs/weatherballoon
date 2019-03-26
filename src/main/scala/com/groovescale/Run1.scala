@@ -110,8 +110,8 @@ object Run1 {
 
   val tmpPumpOnce = new Array[Byte](1024)
   def pumpOnce(in:InputStream, os:OutputStream) : Unit = {
-    if(in.available > 0) {
-      log.info("trying to read")
+    while(in.available > 0) {
+      //log.info("trying to read")
       val i = in.read(tmpPumpOnce, 0, 1024)
       if (i < 0) {
         log.info("available input has no input.  Error?")
