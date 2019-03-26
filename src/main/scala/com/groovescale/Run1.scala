@@ -173,6 +173,16 @@ object Run1 {
       jsch.addIdentity(pkfile)
       val session = jsch.getSession(username, hostname, 22)
       session.setConfig(props)
+      session.connect(30000) // making a connection with timeout.
+      val channel: Channel = session.openChannel("shell")
+
+      channel.setInputStream(System.in)
+      channel.setOutputStream(System.out)
+
+      channel.connect(3 * 1000)
+      Thread.sleep(60000)
+
+      /*
       log.info("about to connect via jsch")
       session.connect(15)
       log.info("connected via jsch")
@@ -195,7 +205,8 @@ object Run1 {
       log.info("about to disconnect session")
       session.disconnect()
       log.info(s"status ${chan.getExitStatus}")
-      return Success(chan.getExitStatus)
+      return Success(chan.getExitStatus)*/
+      return Success(0)
     } catch {
       case ex:Throwable =>
         return Failure(ex)
