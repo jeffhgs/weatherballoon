@@ -154,6 +154,9 @@ object Run1 {
           .withTags(new Tag(tag,""))
       )
       .withInstanceInitiatedShutdownBehavior(ShutdownBehavior.Terminate)
+      .withIamInstanceProfile(
+        new IamInstanceProfileSpecification().withArn(
+          "arn:aws:iam::............:instance-profile/can_terminateInstances2"))
       .withRequestCredentialsProvider(
         new AWSStaticCredentialsProvider(new BasicAWSCredentials(
           cred.id,

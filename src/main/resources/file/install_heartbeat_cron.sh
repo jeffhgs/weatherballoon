@@ -71,3 +71,23 @@ EOF2
 
 sudo install /tmp/with_heartbeat.sh /usr/local/bin/with_heartbeat.sh
 rm -f /tmp/with_heartbeat.sh
+
+
+
+cat > /tmp/with_instance_role.sh <<"EOF3"
+#!/bin/bash
+role="$1"
+shift
+cmd="$@"
+
+js=$(curl --silent "http://169.254.169.254/latest/meta-data/iam/security-credentials/${role}")
+
+export AWS_ACCESS_KEY_ID=$(echo "$js" | jq -r ".AccessKeyId")
+export AWS_SECRET_ACCESS_KEY=$(echo "$js" | jq -r ".SecretAccessKey")
+export AWS_SESSION_TOKEN=$(echo "$js" | jq -r ".Token")
+
+exec ${cmd[*]}
+EOF3
+
+sudo install /tmp/with_instance_role.sh /usr/local/bin/with_instance_role.sh
+rm -f /tmp/with_instance_role.sh
