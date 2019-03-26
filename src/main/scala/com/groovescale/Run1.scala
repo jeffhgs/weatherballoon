@@ -296,7 +296,9 @@ object Run1 {
       "env", s"AWS_ACCESS_KEY_ID=${cfg.cred.id}",
       s"AWS_SECRET_ACCESS_KEY=${cfg.cred.secret}",
       "RCLONE_CONFIG_MYS3_TYPE=s3",
-      "rclone", "--s3-env-auth", "--s3-region", "us-west-2",
+      "rclone",
+      "--config", "/dev/null",
+      "--s3-env-auth", "--s3-region", "us-west-2",
       "--exclude", ".git/", "--exclude", ".idea/", "--exclude", "build/", "--exclude", "out/", "--exclude", ".gradle/",
       "sync", cfg.sync.adirFrom, s"mys3:${cfg.sync.adirRemote}"
     )

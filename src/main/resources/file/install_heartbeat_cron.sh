@@ -96,7 +96,7 @@ rm -f /tmp/with_instance_role.sh
 
 cat > /tmp/rclone.sh <<"EOF4"
 #!/bin/bash
-env RCLONE_CONFIG_MYS3_TYPE=s3 rclone --s3-env-auth "$@"
+env RCLONE_CONFIG_MYS3_TYPE=s3 rclone --config /dev/null --s3-env-auth "$@"
 EOF4
 
 sudo install /tmp/rclone.sh /usr/local/bin/rclone.sh
