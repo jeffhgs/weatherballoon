@@ -9,27 +9,6 @@ import scala.util.{Failure, Success, Try}
 object SyncUtil {
   val log = LoggerFactory.getLogger(SyncUtil.getClass())
 
-  def rsync(ipaddr:String, cfg : config.Remoter) : Int = {
-    import scala.sys.process._
-    if(!(new File(cfg.sync.fileExcludes).exists()))
-      throw new RuntimeException(s"fileExcludes=${cfg.sync.fileExcludes} does not exist")
-    val dirFrom = new File(cfg.sync.adirLocal)
-    if(!dirFrom.exists())
-      throw new RuntimeException(s"fileExcludes=${cfg.sync.adirLocal} does not exist")
-    if(!dirFrom.isDirectory)
-      throw new RuntimeException(s"fileExcludes=${cfg.sync.adirLocal} is not a directory")
-    val cmd = cmdRsync(ipaddr,cfg)
-    log.info(s"about to ${cmd}")
-    cmd.!
-  }
-
-  def cmdRsync(ipaddr:String, cfg:config.Remoter) : Seq[String] = {
-    Seq(
-      "env", s"RSYNC_RSH=ssh -i ${cfg.kpFile()} -l ${cfg.provisioner.os.username} -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null",
-      "rsync", s"--exclude-from=${cfg.sync.fileExcludes}", "--verbose", "-r", s"${cfg.sync.adirLocal}/", s"${cfg.provisioner.os.username}@${ipaddr}:${cfg.sync.adirServer}/"
-    )
-  }
-
   def rcloneUp(cfg:config.Remoter) : Try[Int] = {
     import scala.sys.process._
     val cmd = Seq(

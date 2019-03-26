@@ -211,6 +211,7 @@ Note that the "*" can be further restricted to passing of the specific role you 
 ## Known Issues
 
   - The number of minutes before termination is hardcoded as numMinutes=15 in <code>src/main/resources/file/install_heartbeat_cron.sh</code>
+  - The configuration key sync.fileExcludes was broken porting from rsync to rclone
   - Credentials cannot be encrypted
   - There is only one cloud provisioner  (AWS)
 
