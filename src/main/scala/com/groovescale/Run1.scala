@@ -120,74 +120,12 @@ object Run1 {
       System.out.print(new String(tmpPumpOnce, 0, i))
     }
   }
-  def pump(channel: Channel, in: InputStream) : Unit = {
-    val tmp = new Array[Byte](1024)
-    while (true) {
-      log.info("available?")
-      if(in.available > 0) {
-        log.info("trying to read")
-        val i = in.read(tmp, 0, 1024)
-        if (i < 0) {
-          log.info("available input has no input.  Error?")
-          return
-        }
-        System.out.print(new String(tmp, 0, i))
-        if (channel.isClosed) {
-          log.info("channel is now closed")
-          //log.info("exit-status: " + channel.getExitStatus)
-          return
-        }
-      }
-      try {
-        log.info("about to sleep")
-        Thread.sleep(1000)
-        log.info("done sleeping")
-      }catch {
-        case ee: Exception =>
-          ee.printStackTrace()
-      }
-    }
-    log.info("channel unexpectedly closed")
-  }
 
-  def execViaSshImplJsch1(session:Session, command:String) : Try[Int] = {
-    val channel: Channel = session.openChannel("shell")
-
-    import java.io.PipedInputStream
-    import java.io.PipedOutputStream
-    val in = new PipedInputStream
-    val pin = new PipedOutputStream(in)
-
-    channel.setInputStream(in)
-    val out = new PipedOutputStream()
-    val pout = new PipedInputStream(out)
-    channel.setOutputStream(out)
-
-    channel.connect(3 * 1000)
-    pin.write(command.getBytes)
-    pin.write("\n".getBytes())
-    pin.write("exit\n".getBytes())
-    pin.flush()
-    while(!channel.isClosed) {
-      pumpOnce(pout, System.out)
-      log.info("sleeping")
-      Thread.sleep(1000)
-    }
-    log.info("shell channel is now disconnected")
-    // TODO: implement status code
-    Success(0)
-  }
   def execViaSshImplJsch2(session:Session, command:String) : Try[Int] = {
     log.info("connected via jsch")
     val chan = session.openChannel("exec")
-    //log.info("setting stderr stream")
-    // can't just set System.out as output, because jsch calls close on the file descriptor
-    //chan.asInstanceOf[ChannelExec].setErrStream(System.out)
-    //chan.setOutputStream(System.out)
     log.info(s"setting command: ${command}")
     chan.asInstanceOf[ChannelExec].setCommand(command)
-    //log.info("getting stdin stream")
-    //chan.setInputStream(null)
     val is = chan.getInputStream
 
     val out = new PipedOutputStream()
@@ -197,7 +135,6 @@ object Run1 {
     log.info("about to connect")
     chan.connect(10000)
     log.info("about to pump")
-    //pump(chan, is)
     while(!chan.isClosed) {
       pumpOnce(pout, System.out)
       log.info("sleeping")
@@ -252,7 +189,6 @@ object Run1 {
       val session = jsch.getSession(username, hostname, 22)
       session.setConfig(props)
       session.connect(30000) // making a connection with timeout.
-      //return execViaSshImplJsch1(session, command)
       return execViaSshImplJsch2(session, command)
     } catch {
       case ex:Throwable =>
