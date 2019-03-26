@@ -18,6 +18,8 @@ dependencies {
     compile 'org.apache.jclouds:jclouds-allcompute:2.1.0'
     compile 'org.apache.jclouds.labs:dimensiondata-cloudcontrol:2.1.0'
 
+    compile 'com.amazonaws:aws-java-sdk-ec2:1.11.496'
+
     compile 'net.logstash.logback:logstash-logback-encoder:5.2'
     compile 'ch.qos.logback:logback-classic:1.2.3'
 }

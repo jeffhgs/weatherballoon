@@ -3,6 +3,9 @@ package com.groovescale
 import java.io._
 import java.util.Properties
 
+import com.amazonaws.auth.{AWSCredentials, AWSStaticCredentialsProvider, BasicAWSCredentials}
+import com.amazonaws.services.ec2.AmazonEC2Client
+import com.amazonaws.services.ec2.model._
 import com.decodified.scalassh._
 import com.google.common.collect.ImmutableSet
 import com.google.common.collect.Iterables.{concat, getOnlyElement}
@@ -119,6 +122,47 @@ object Run1 {
         println(ex)
     }
     println("goodbye")
+  }
+
+  def provisionViaAws(
+                       region: String,
+                       group1: String,
+                       keyPair: String,
+                       stUser: String,
+                       ami: String,
+                       tag: String,
+                       cred: config.Aws
+                     ) = {
+    val runInstancesRequest = new RunInstancesRequest();
+    import java.nio.charset.StandardCharsets
+    import java.util.Base64
+    val encoder = Base64.getEncoder
+    val normalString = getUserdataScriptRaw().mkString("\n")
+    val encodedString = encoder.encodeToString(normalString.getBytes(StandardCharsets.UTF_8))
+
+    runInstancesRequest
+      .withImageId(ami)
+      .withInstanceType(InstanceType.T2Medium)
+      .withMinCount(1)
+      .withMaxCount(1)
+      .withKeyName(keyPair)
+      .withSecurityGroups(group1)
+      .withUserData(encodedString)
+      .withTagSpecifications(
+        new TagSpecification()
+          .withResourceType(ResourceType.Instance)
+          .withTags(new Tag(tag,""))
+      )
+      .withInstanceInitiatedShutdownBehavior(ShutdownBehavior.Terminate)
+      .withRequestCredentialsProvider(
+        new AWSStaticCredentialsProvider(new BasicAWSCredentials(
+          cred.id,
+          cred.secret
+        )))
+    val amazonEC2Client = AmazonEC2Client.builder().withRegion(region).build()
+    val result = amazonEC2Client.runInstances(
+      runInstancesRequest)
+    result.getReservation()
   }
 
   private def getUserdataScript(res:String) : Seq[String] = {
@@ -353,7 +397,8 @@ object Run1 {
         case None =>
           // presume we should make a node
           println("looks like we should make a node")
-          provisionViaJclouds(cfg.region, cfg.group1, cfg.keyPair, cfg.os.stUser, cfg.os.ami, cfg.tag, cfg.cred)
+          provisionViaAws(cfg.region, cfg.group1, cfg.keyPair, cfg.os.stUser, cfg.os.ami, cfg.tag, cfg.cred)
+          Thread.sleep(10000)
           tryFindNode(cfg.group1, cfg.tag, cfg.cred) match {
             case Some((node, addr)) =>
               // now there will eventually be a node
