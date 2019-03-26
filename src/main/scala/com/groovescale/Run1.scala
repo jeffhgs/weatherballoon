@@ -178,27 +178,34 @@ object Run1 {
     Success(0)
   }
   def execViaSshImplJsch2(session:Session, command:String) : Try[Int] = {
-    log.info("about to connect via jsch")
-    session.connect(15)
     log.info("connected via jsch")
     val chan = session.openChannel("exec")
-    //log.info("setting stdout stream")
+    //log.info("setting stderr stream")
+    // can't just set System.out as output, because jsch calls close on the file descriptor
+    //chan.asInstanceOf[ChannelExec].setErrStream(System.out)
     //chan.setOutputStream(System.out)
-    log.info("setting stderr stream")
-    chan.asInstanceOf[ChannelExec].setErrStream(System.out)
-    log.info("setting command")
+    log.info(s"setting command: ${command}")
     chan.asInstanceOf[ChannelExec].setCommand(command)
-    log.info("getting stdin stream")
-    chan.setInputStream(null)
+    //log.info("getting stdin stream")
+    //chan.setInputStream(null)
     val is = chan.getInputStream
     log.info("about to connect")
-    chan.connect()
+    chan.connect(10000)
     log.info("about to pump")
-    pump(chan, is)
+    //pump(chan, is)
+    while(!chan.isClosed) {
+      log.info("sleeping")
+      Thread.sleep(1000)
+    }
+    System.out.flush()
     log.info("about to disconnect channel")
-    chan.disconnect()
+    if(chan.isConnected) {
+      chan.disconnect()
+    }
     log.info("about to disconnect session")
-    session.disconnect()
+    if(session.isConnected) {
+      session.disconnect()
+    }
     log.info(s"status ${chan.getExitStatus}")
     return Success(chan.getExitStatus)
   }
