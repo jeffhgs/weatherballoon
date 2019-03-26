@@ -296,6 +296,13 @@ object Run1 {
       }
     }
   }
+  def testFindNode(
+                     cfg:config.Remoter
+                   ) =
+  {
+    val node = tryFindNode(cfg.group1, cfg.tag, cfg.cred)
+    println(">>>>  " + node)
+  }
 
   def testSsh(cfg:config.Remoter) = {
     log.info("hello")
@@ -450,6 +457,7 @@ object Run1 {
   def main(args: Array[String]): Unit = {
     val cfg = getCfg()
 //    testListNodes(cfg)
+//    testFindNode(cfg)
 //    testProvision(cfg)
 //    testSsh(cfg)
     testProvisionRun(cfg)
