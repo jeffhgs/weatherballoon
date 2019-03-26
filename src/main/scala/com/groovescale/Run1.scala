@@ -122,9 +122,9 @@ object Run1 {
   }
 
   def execViaSshImplJsch2(session:Session, command:String) : Try[Int] = {
-    log.info("connected via jsch")
+    //log.info("connected via jsch")
     val chan = session.openChannel("exec")
-    log.info(s"setting command: ${command}")
+    //log.info(s"setting command: ${command}")
     chan.asInstanceOf[ChannelExec].setCommand(command)
     val is = chan.getInputStream
 
@@ -132,24 +132,24 @@ object Run1 {
     val pout = new PipedInputStream(out)
     chan.setOutputStream(out)
 
-    log.info("about to connect")
+    //log.info("about to connect")
     chan.connect(10000)
-    log.info("about to pump")
+    //log.info("about to pump")
     while(!chan.isClosed) {
       pumpOnce(pout, System.out)
-      log.info("sleeping")
+      //log.info("sleeping")
       Thread.sleep(1000)
     }
     System.out.flush()
-    log.info("about to disconnect channel")
+    //log.info("about to disconnect channel")
     if(chan.isConnected) {
       chan.disconnect()
     }
-    log.info("about to disconnect session")
+    //log.info("about to disconnect session")
     if(session.isConnected) {
       session.disconnect()
     }
-    log.info(s"status ${chan.getExitStatus}")
+    //log.info(s"status ${chan.getExitStatus}")
     return Success(chan.getExitStatus)
   }
 
@@ -184,7 +184,7 @@ object Run1 {
       val props = new Properties()
       props.put("StrictHostKeyChecking", "no")
       val jsch = new JSch();
-      JSch.setLogger(new JSCHLogger());
+      //JSch.setLogger(new JSCHLogger());
       jsch.addIdentity(pkfile)
       val session = jsch.getSession(username, hostname, 22)
       session.setConfig(props)
