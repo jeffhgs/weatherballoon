@@ -359,6 +359,17 @@ object Run1 {
     System.exit(0)
   }
 
+  def findCfg(name:String) : File = {
+    var dir = new File(new File("").getAbsolutePath)
+    while(dir != null) {
+      val fileCfg = new File(dir, name)
+      if(fileCfg.exists())
+        return fileCfg
+      dir = dir.getParentFile
+    }
+    return null;
+  }
+
   def getCfg() = {
     val adirHome = System.getenv("HOME")
 
@@ -368,7 +379,7 @@ object Run1 {
     import config.formats
     var cfg : config.Remoter = null
     try {
-      val afileConfig = new File(new File(adirHome), ".weatherballoon.json")
+      val afileConfig = findCfg(".weatherballoon.json")
       val textConfig = io.Source.fromFile(afileConfig).mkString
       cfg = read[config.Remoter](textConfig)
     } catch {
@@ -377,7 +388,7 @@ object Run1 {
     }
     var cred : config.Aws = null
     try {
-      val afileCred = new File(new File(adirHome), ".weatherballoon_cred.json")
+      val afileCred = findCfg(".weatherballoon_cred.json")
       val textCred = io.Source.fromFile(afileCred).mkString
       cred = read[config.Aws](textCred)
     } catch {
