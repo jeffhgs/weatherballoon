@@ -11,6 +11,49 @@ import scala.util.{Failure, Success, Try}
 object ExecUtil {
   val log = LoggerFactory.getLogger(ExecUtil.getClass())
 
+  def execViaSsh(
+                  hostname:String,
+                  username:String,
+                  pkfile:String,
+                  //                fingerprint:String,
+                  sConnectTimeout : Int,
+                  command:String
+                ) : Try[Int] =
+  {
+    val res = execViaSshImpl(hostname, username, pkfile, sConnectTimeout, "touch /tmp/heartbeat")
+    res match {
+      case Success(0) =>
+        return execViaSshImpl(hostname, username, pkfile, sConnectTimeout, command)
+      case _ =>
+        return res
+    }
+  }
+
+  def execViaSshImpl(
+                      hostname:String,
+                      username:String,
+                      pkfile:String,
+                      //                fingerprint:String,
+                      sConnectTimeout : Int,
+                      command:String
+                    ) : Try[Int] =
+  {
+    try {
+      val props = new Properties()
+      props.put("StrictHostKeyChecking", "no")
+      val jsch = new JSch();
+      //JSch.setLogger(new JSCHLogger());
+      jsch.addIdentity(pkfile)
+      val session = jsch.getSession(username, hostname, 22)
+      session.setConfig(props)
+      session.connect(30000) // making a connection with timeout.
+      return execViaSshImplJsch2(session, command)
+    } catch {
+      case ex:Throwable =>
+        return Failure(ex)
+    }
+  }
+
   val tmpPumpOnce = new Array[Byte](1024)
   def pumpOnce(in:InputStream, os:OutputStream) : Unit = {
     while(in.available > 0) {
@@ -56,49 +99,6 @@ object ExecUtil {
     }
     //log.info(s"status ${chan.getExitStatus}")
     return Success(chan.getExitStatus)
-  }
-
-  def execViaSsh(
-                  hostname:String,
-                  username:String,
-                  pkfile:String,
-                  //                fingerprint:String,
-                  sConnectTimeout : Int,
-                  command:String
-                ) : Try[Int] =
-  {
-    val res = execViaSshImpl(hostname, username, pkfile, sConnectTimeout, "touch /tmp/heartbeat")
-    res match {
-      case Success(0) =>
-        return execViaSshImpl(hostname, username, pkfile, sConnectTimeout, command)
-      case _ =>
-        return res
-    }
-  }
-
-  def execViaSshImpl(
-                      hostname:String,
-                      username:String,
-                      pkfile:String,
-                      //                fingerprint:String,
-                      sConnectTimeout : Int,
-                      command:String
-                    ) : Try[Int] =
-  {
-    try {
-      val props = new Properties()
-      props.put("StrictHostKeyChecking", "no")
-      val jsch = new JSch();
-      //JSch.setLogger(new JSCHLogger());
-      jsch.addIdentity(pkfile)
-      val session = jsch.getSession(username, hostname, 22)
-      session.setConfig(props)
-      session.connect(30000) // making a connection with timeout.
-      return execViaSshImplJsch2(session, command)
-    } catch {
-      case ex:Throwable =>
-        return Failure(ex)
-    }
   }
 
   def execAndRetry(
