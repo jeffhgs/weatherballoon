@@ -37,18 +37,18 @@ dependencies {
 }
 
 task(run1, type: JavaExec) {
-    main = 'com.groovescale.Run1'
+    main = 'com.groovescale.weatherballoon.Run1'
     classpath = sourceSets.main.runtimeClasspath
 }
 
 task(run2, type: JavaExec) {
-    main = 'com.groovescale.Run1'
+    main = 'com.groovescale.weatherballoon.Run1'
     args = ["bash", "./gradlew", "jar"]
     classpath = sourceSets.main.runtimeClasspath
 }
 
 task(runJce, type: JavaExec) {
-    main = 'com.groovescale.RunJce'
+    main = 'com.groovescale.weatherballoon.RunJce'
     classpath = sourceSets.main.runtimeClasspath
 }
 
@@ -58,7 +58,7 @@ task copyDependencies(type: Copy) {
 }
 
 shadowJar {
-    mainClassName = 'com.groovescale.Run1'
+    mainClassName = 'com.groovescale.weatherballoon.Run1'
     baseName = 'weatherballoon_shadow'
     classifier = null
     version = null

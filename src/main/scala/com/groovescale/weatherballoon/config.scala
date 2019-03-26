@@ -1,4 +1,4 @@
-package com.groovescale
+package com.groovescale.weatherballoon
 
 import java.io.File
 
@@ -47,7 +47,6 @@ object config {
   }
 
   import org.json4s._
-  import org.json4s.jackson.JsonMethods._
 
   implicit val formats = (DefaultFormats
     + FieldSerializer[AwsCred]()

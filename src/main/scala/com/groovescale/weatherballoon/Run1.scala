@@ -1,12 +1,12 @@
-package com.groovescale
+package com.groovescale.weatherballoon
 
 import java.io._
 import java.util.Properties
 
-import com.amazonaws.auth.{AWSCredentials, AWSStaticCredentialsProvider, BasicAWSCredentials}
+import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model._
-import com.jcraft.jsch.{Channel, ChannelExec, JSch, Session}
+import com.jcraft.jsch.{ChannelExec, JSch, Session}
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
@@ -218,7 +218,6 @@ object Run1 {
   {
     val nodes = listNodesViaAws(cfg.group1, cfg.region, cfg.cred)
     log.info(s">> No of nodes ${nodes.size}")
-    import scala.collection.JavaConversions._
     for (node <- nodes) {
       log.info(">>>>  " + node)
       if(node.tags.contains(cfg.tag)) {
@@ -423,10 +422,8 @@ object Run1 {
   def getCfg() = {
     val adirHome = System.getenv("HOME")
 
-    import org.json4s._
-
-    import org.json4s.jackson.Serialization.{read, write}
     import config.formats
+    import org.json4s.jackson.Serialization.read
     var cfg : config.Remoter = null
     try {
       val afileConfig = findCfg(".weatherballoon.json")
