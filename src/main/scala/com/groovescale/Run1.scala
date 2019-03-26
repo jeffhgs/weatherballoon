@@ -6,7 +6,7 @@ import java.util.Properties
 import com.amazonaws.auth.{AWSCredentials, AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model._
-import com.decodified.scalassh._
+import com.jcraft.jsch.{Channel, ChannelExec, JSch}
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
@@ -108,6 +108,36 @@ object Run1 {
       yield(NodeMetadata(addrs, status, tags))
   }
 
+  def pump(channel: Channel, in: InputStream) : Unit = {
+    val tmp = new Array[Byte](1024)
+    while (true) {
+      log.info("available?")
+      if(in.available > 0) {
+        log.info("trying to read")
+        val i = in.read(tmp, 0, 1024)
+        if (i < 0) {
+          log.info("available input has no input.  Error?")
+          return
+        }
+        System.out.print(new String(tmp, 0, i))
+        if (channel.isClosed) {
+          log.info("channel is now closed")
+          //log.info("exit-status: " + channel.getExitStatus)
+          return
+        }
+      }
+      try {
+        log.info("about to sleep")
+        Thread.sleep(1000)
+        log.info("done sleeping")
+      }catch {
+        case ee: Exception =>
+          ee.printStackTrace()
+      }
+    }
+    log.info("channel unexpectedly closed")
+  }
+
   def execViaSsh(
                 hostname:String,
                 username:String,
@@ -115,41 +145,43 @@ object Run1 {
 //                fingerprint:String,
                 sConnectTimeout : Int,
                 command:String
-                ) : Try[CommandResult] =
+                ) : Try[Int] =
   {
-    val hcp =
-      new HostConfigProvider() {
-        override def apply(v1: String): Try[HostConfig] = {
-          scala.util.Success(HostConfig(
-            login = new PublicKeyLogin(
-              username,
-              None,
-              List(pkfile)
-            ),
-            sshjConfig = new net.schmizz.sshj.DefaultConfig(),
-            hostName = hostname,
-            // TODO: get fingerprint from API and verify
-            //HostKeyVerifiers.forFingerprint(fingerprint)
-            hostKeyVerifier = HostKeyVerifiers.DontVerify,
-            connectTimeout = Some(sConnectTimeout)
-          )
-          )
-        }
-      }
-    var res : Try[CommandResult] = scala.util.Failure(new RuntimeException("no ssh connection"))
     try {
-      SSH(hostname, hcp) { client => {
-        val res0 = client.exec("touch /tmp/heartbeat")
-        if(res0.isSuccess)
-          res = client.exec(command)
-          client.exec("touch /tmp/heartbeat")
-        }
-      }
+      val props = new Properties()
+      props.put("StrictHostKeyChecking", "no")
+      val jsch = new JSch();
+      JSch.setLogger(new JSCHLogger());
+      jsch.addIdentity(pkfile)
+      val session = jsch.getSession(username, hostname, 22)
+      session.setConfig(props)
+      log.info("about to connect via jsch")
+      session.connect(15)
+      log.info("connected via jsch")
+      val chan = session.openChannel("exec")
+      //log.info("setting stdout stream")
+      //chan.setOutputStream(System.out)
+      log.info("setting stderr stream")
+      chan.asInstanceOf[ChannelExec].setErrStream(System.out)
+      log.info("setting command")
+      chan.asInstanceOf[ChannelExec].setCommand(command)
+      log.info("getting stdin stream")
+      chan.setInputStream(null)
+      val is = chan.getInputStream
+      log.info("about to connect")
+      chan.connect()
+      log.info("about to pump")
+      pump(chan, is)
+      log.info("about to disconnect channel")
+      chan.disconnect()
+      log.info("about to disconnect session")
+      session.disconnect()
+      log.info(s"status ${chan.getExitStatus}")
+      return Success(chan.getExitStatus)
     } catch {
       case ex:Throwable =>
-        log.error("ssh exception: "+ex)
+        return Failure(ex)
     }
-    return res
   }
 
   def testProvision(cfg:config.Remoter) = {
@@ -195,7 +227,7 @@ object Run1 {
     value match {
       case scala.util.Success(value) =>
         // TODO: for logging, limit stdout and stderr to a maximum number of characters
-        log.info(s"status=${value.exitCode}\n\tcommand=\n\t${cmd}\n\tstdout=\n\t${value.stdOutAsString()}\n\tstderr=${value.stdErrAsString()}")
+        log.info(s"status=${value}\n\tcommand=\n\t${cmd}")
       case scala.util.Failure(ex) =>
         log.warn(ex.toString)
     }
@@ -254,12 +286,12 @@ object Run1 {
           if(!dryRun) {
             value match {
               case scala.util.Success(value) =>
-                log.info(s"status=${value.exitCode}\n\tcommand=\n\t${command}\n\tstdout=\n\t${value.stdOutAsString()}\n\tstderr=${value.stdErrAsString()}")
+                log.info(s"status=${value}\n\tcommand=\n\t${command}")
               case scala.util.Failure(ex) =>
                 log.warn(ex.toString)
             }
           }
-          if (dryRun && value.isSuccess && value.get.exitCode.getOrElse(-1) == 0) {
+          if (dryRun && value.isSuccess && value.get == 0) {
             done = true
           } else if (!dryRun && value.isSuccess) {
             done = true
