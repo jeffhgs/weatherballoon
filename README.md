@@ -220,7 +220,7 @@ To recompile weatherballoon, use the following gradle command:
 
     ./gradlew zip
 
-The distribution zip will be built at <code>build/dist.zip</code>
+The distribution zip will be built at <code>build/weatherballoon.zip</code>
 
 
 # Revision History

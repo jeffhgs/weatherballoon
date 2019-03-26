@@ -92,7 +92,7 @@ task zip(type: Zip) {
    from 'build/zip'
    include '*'
    include '*/*' //to include contents of a folder present inside Reports directory
-   archiveName 'dist.zip'
+   archiveName 'weatherballoon.zip'
    destinationDir(file('build'))
 }
 zip.dependsOn 'copyForZip1'
