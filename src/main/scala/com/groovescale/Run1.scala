@@ -6,7 +6,7 @@ import java.util.Properties
 import com.amazonaws.auth.{AWSCredentials, AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model._
-import com.jcraft.jsch.{Channel, ChannelExec, JSch}
+import com.jcraft.jsch.{Channel, ChannelExec, JSch, Session}
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
@@ -138,6 +138,31 @@ object Run1 {
     log.info("channel unexpectedly closed")
   }
 
+  def execViaSshImplJsch1(session:Session, command:String) : Try[Int] = {
+    val channel: Channel = session.openChannel("shell")
+
+    import java.io.PipedInputStream
+    import java.io.PipedOutputStream
+    val in = new PipedInputStream
+    val pin = new PipedOutputStream(in.asInstanceOf[PipedInputStream])
+
+    channel.setInputStream(in)
+    channel.setOutputStream(System.out)
+
+    channel.connect(3 * 1000)
+    pin.write(command.getBytes)
+    pin.write("\n".getBytes())
+    pin.write("exit\n".getBytes())
+    pin.flush()
+    while(!channel.isClosed) {
+      log.info("sleeping")
+      Thread.sleep(1000)
+    }
+    log.info("shell channel is now disconnected")
+    // TODO: implement status code
+    Success(0)
+  }
+
   def execViaSsh(
                   hostname:String,
                   username:String,
@@ -174,27 +199,8 @@ object Run1 {
       val session = jsch.getSession(username, hostname, 22)
       session.setConfig(props)
       session.connect(30000) // making a connection with timeout.
-      val channel: Channel = session.openChannel("shell")
-
-      import java.io.PipedInputStream
-      import java.io.PipedOutputStream
-      val in = new PipedInputStream
-      val pin = new PipedOutputStream(in.asInstanceOf[PipedInputStream])
-
-      channel.setInputStream(in)
-      channel.setOutputStream(System.out)
-
-      channel.connect(3 * 1000)
-      pin.write(command.getBytes)
-      pin.write("\n".getBytes())
-      pin.write("exit\n".getBytes())
-      pin.flush()
-      while(!channel.isClosed) {
-        log.info("sleeping")
-        Thread.sleep(1000)
-      }
-      log.info("shell channel is now disconnected")
-
+      return execViaSshImplJsch1(session, command)
+      
       /*
       log.info("about to connect via jsch")
       session.connect(15)
