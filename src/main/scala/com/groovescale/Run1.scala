@@ -301,7 +301,7 @@ object Run1 {
       "--config", "/dev/null",
       "--s3-env-auth", "--s3-region", "us-west-2",
       "--exclude", ".git/", "--exclude", ".idea/", "--exclude", "build/", "--exclude", "out/", "--exclude", ".gradle/",
-      "sync", cfg.sync.adirLocal, s"mys3:${cfg.sync.adirRemote}"
+      "sync", cfg.sync.adirLocal, s"mys3:${cfg.sync.dirStorage}/srchome"
     )
     val status = cmd.!
     if(status==0) Success(0) else Failure(new RuntimeException(s"status=${status}"))
@@ -311,12 +311,12 @@ object Run1 {
     val idrun = System.currentTimeMillis()
     val cmd1 = cmd0.mkString(" ")
     val cmd2 =
-      s"/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:weatherballoon-test1/srchome ${cfg.sync.adirRemote}" +
+      s"/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:${cfg.sync.dirStorage}/srchome ${cfg.sync.adirRemote}" +
       s" && rm -rf ${cfg.sync.adirRemote}/log" +
       s" && mkdir -p ${cfg.sync.adirRemote}/log" +
       s" && cd ${cfg.sync.adirRemote} " +
       s" && (${cmd1} 2>&1 | tee -a ${cfg.sync.adirRemote}/log/build.log )" +
-      s" && /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirRemote}/log mys3:weatherballoon-test1/log/${idrun} "
+      s" && /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirRemote}/log mys3:${cfg.sync.dirStorage}/log/${idrun} "
     val pkfile = new File(System.getenv("HOME"), ".ssh/id_gs_temp_2019-01").toString()
 
     val numTries = 50
