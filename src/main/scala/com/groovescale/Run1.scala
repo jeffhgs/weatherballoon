@@ -177,6 +177,31 @@ object Run1 {
     // TODO: implement status code
     Success(0)
   }
+  def execViaSshImplJsch2(session:Session, command:String) : Try[Int] = {
+    log.info("about to connect via jsch")
+    session.connect(15)
+    log.info("connected via jsch")
+    val chan = session.openChannel("exec")
+    //log.info("setting stdout stream")
+    //chan.setOutputStream(System.out)
+    log.info("setting stderr stream")
+    chan.asInstanceOf[ChannelExec].setErrStream(System.out)
+    log.info("setting command")
+    chan.asInstanceOf[ChannelExec].setCommand(command)
+    log.info("getting stdin stream")
+    chan.setInputStream(null)
+    val is = chan.getInputStream
+    log.info("about to connect")
+    chan.connect()
+    log.info("about to pump")
+    pump(chan, is)
+    log.info("about to disconnect channel")
+    chan.disconnect()
+    log.info("about to disconnect session")
+    session.disconnect()
+    log.info(s"status ${chan.getExitStatus}")
+    return Success(chan.getExitStatus)
+  }
 
   def execViaSsh(
                   hostname:String,
@@ -214,33 +239,8 @@ object Run1 {
       val session = jsch.getSession(username, hostname, 22)
       session.setConfig(props)
       session.connect(30000) // making a connection with timeout.
-      return execViaSshImplJsch1(session, command)
-      
-      /*
-      log.info("about to connect via jsch")
-      session.connect(15)
-      log.info("connected via jsch")
-      val chan = session.openChannel("exec")
-      //log.info("setting stdout stream")
-      //chan.setOutputStream(System.out)
-      log.info("setting stderr stream")
-      chan.asInstanceOf[ChannelExec].setErrStream(System.out)
-      log.info("setting command")
-      chan.asInstanceOf[ChannelExec].setCommand(command)
-      log.info("getting stdin stream")
-      chan.setInputStream(null)
-      val is = chan.getInputStream
-      log.info("about to connect")
-      chan.connect()
-      log.info("about to pump")
-      pump(chan, is)
-      log.info("about to disconnect channel")
-      chan.disconnect()
-      log.info("about to disconnect session")
-      session.disconnect()
-      log.info(s"status ${chan.getExitStatus}")
-      return Success(chan.getExitStatus)*/
-      return Success(0)
+      //return execViaSshImplJsch1(session, command)
+      return execViaSshImplJsch2(session, command)
     } catch {
       case ex:Throwable =>
         return Failure(ex)
