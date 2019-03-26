@@ -8,6 +8,15 @@ object config {
                         secret:String
                       )
 
+  case class AwsRole(
+                      arn:String
+                    )
+  {
+    def name : String = {
+      arn.split("/").last
+    }
+  }
+
   case class Os(
                        val ami: String,
                        val username: String
@@ -24,6 +33,7 @@ object config {
                       val region: String,
                       val group1: String,
                       val cred: config.AwsCred,
+                      val roleOfInstance: config.AwsRole,
                       val tag: String,
                       val keyPair: String,
                       val instanceType: String,

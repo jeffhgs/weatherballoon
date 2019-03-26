@@ -25,6 +25,7 @@ object Run1 {
                        stUser: String,
                        ami: String,
                        tag: String,
+                       roleOfInstance: config.AwsRole,
                        cred: config.AwsCred
                      ) = {
     val runInstancesRequest = new RunInstancesRequest();
@@ -51,8 +52,8 @@ object Run1 {
       .withInstanceInitiatedShutdownBehavior(ShutdownBehavior.Terminate)
       .withIamInstanceProfile(
         new IamInstanceProfileSpecification().withArn(
-          "arn:aws:iam::............:instance-profile/can_terminateInstances2"))
-      .withRequestCredentialsProvider(
+          roleOfInstance.arn
+        ))
         new AWSStaticCredentialsProvider(new BasicAWSCredentials(
           cred.id,
           cred.secret
@@ -207,6 +208,7 @@ object Run1 {
       cfg.os.username,
       cfg.os.ami,
       cfg.tag,
+      cfg.roleOfInstance,
       cfg.cred
     )
   }
@@ -359,12 +361,12 @@ object Run1 {
     val idrun = System.currentTimeMillis()
     val cmd1 = cmd0.mkString(" ")
     val cmd2 =
-      s"/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:${cfg.sync.dirStorage}/srchome ${cfg.sync.adirServer}" +
+      s"/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh ${cfg.roleOfInstance.name} /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:${cfg.sync.dirStorage}/srchome ${cfg.sync.adirServer}" +
       s" && rm -rf ${cfg.sync.adirServer}/log" +
       s" && mkdir -p ${cfg.sync.adirServer}/log" +
       s" && cd ${cfg.sync.adirServer} " +
       s" && (${cmd1} 2>&1 | tee -a ${cfg.sync.adirServer}/log/build.log )" +
-      s" && /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirServer}/log mys3:${cfg.sync.dirStorage}/log/${idrun} "
+      s" && /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh ${cfg.roleOfInstance.name} /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirServer}/log mys3:${cfg.sync.dirStorage}/log/${idrun} "
     val pkfile = new File(System.getenv("HOME"), ".ssh/id_gs_temp_2019-01").toString()
 
     val numTries = 50
@@ -382,7 +384,7 @@ object Run1 {
         case None =>
           // presume we should make a node
           log.info("looks like we should make a node")
-          provisionViaAws(cfg.region, cfg.group1, cfg.keyPair, cfg.instanceType, cfg.os.username, cfg.os.ami, cfg.tag, cfg.cred)
+          provisionViaAws(cfg.region, cfg.group1, cfg.keyPair, cfg.instanceType, cfg.os.username, cfg.os.ami, cfg.tag, cfg.roleOfInstance, cfg.cred)
           Thread.sleep(10000)
           tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred) match {
             case Some((node, addr)) =>

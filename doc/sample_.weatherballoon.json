@@ -9,6 +9,9 @@
   },
   "instanceType": "t2.medium",
   "cred": null,
+  "roleOfInstance": {
+    "arn":"arn:aws:iam::............:instance-profile/can_terminateInstances2"
+  },
   "sync": {
     "adirLocal": null,
     "fileExcludes": null,
