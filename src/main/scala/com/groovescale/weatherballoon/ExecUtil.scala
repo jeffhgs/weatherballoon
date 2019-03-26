@@ -54,8 +54,7 @@ object ExecUtil {
     }
   }
 
-  val tmpPumpOnce = new Array[Byte](1024)
-  def pumpOnce(in:InputStream, os:OutputStream) : Unit = {
+  def pumpOnce(in:InputStream, os:OutputStream, tmpPumpOnce:Array[Byte]) : Unit = {
     while(in.available > 0) {
       //log.info("trying to read")
       val i = in.read(tmpPumpOnce, 0, 1024)
@@ -68,6 +67,7 @@ object ExecUtil {
   }
 
   def execViaSshImplJsch2(session:Session, command:String) : Try[Int] = {
+    val tmpPumpOnce = new Array[Byte](1024)
     //log.info("connected via jsch")
     val chan = session.openChannel("exec")
     // If we don't allocate a pty, sshd will not know to kill our process if we ctrl+C weatherballoon
@@ -84,7 +84,7 @@ object ExecUtil {
     chan.connect(10000)
     //log.info("about to pump")
     while(!chan.isClosed) {
-      pumpOnce(pout, System.out)
+      pumpOnce(pout, System.out, tmpPumpOnce)
       //log.info("sleeping")
       Thread.sleep(1000)
     }
