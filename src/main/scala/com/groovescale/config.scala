@@ -27,7 +27,6 @@ object config {
                             val tag: String,
                             val keyPair: String,
                             val os: config.Os,
-                            val cmd: String,
                             val sync:Sync
                           )
   {

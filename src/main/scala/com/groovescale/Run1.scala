@@ -311,7 +311,8 @@ object Run1 {
     log.info("hello")
     val hostname = "ec2-54-186-244-37.us-west-2.compute.amazonaws.com"
     val sConnectTimeout = 10
-    execViaSshAndPrint(hostname, cfg.os.username, cfg.kpFile(), sConnectTimeout, cfg.cmd)
+    val cmd = "echo hello"
+    execViaSshAndPrint(hostname, cfg.os.username, cfg.kpFile(), sConnectTimeout, cmd)
     println("sleeping")
     Thread.sleep(10000)
   }
@@ -394,6 +395,8 @@ object Run1 {
     log.info("hello")
     val pkfile = new File(System.getenv("HOME"), ".ssh/id_gs_temp_2019-01").toString()
 
+    val cmd = s"(echo about to sleep && sleep 60 && echo done sleeping) | tee -a /tmp/test_nn_${System.currentTimeMillis()}.log"
+
     val numTries = 50
     val msBetweenPolls = 5000
     val sConnectTimeout = 5000
@@ -420,7 +423,7 @@ object Run1 {
       execAndRetry(cfg.os.username, pkfile, "echo hello", cfg.group1, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
       println("about to sync")
       rsync(nodeaddr.get._2, cfg)
-      execAndRetry(cfg.os.username, pkfile, cfg.cmd, cfg.group1, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
+      execAndRetry(cfg.os.username, pkfile, cmd, cfg.group1, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
     } catch {
       case ex:Throwable =>
         val sw = new StringWriter()
@@ -452,8 +455,7 @@ object Run1 {
         adirFrom = adirProp,
         adirRemote = s"/home/${os.username}/remoter",
         fileExcludes = new File(adirProp, ".rsync_excludes").toString
-      ),
-      cmd=s"(echo about to sleep && sleep 60 && echo done sleeping) | tee -a /tmp/test_nn_${System.currentTimeMillis()}.log"
+      )
     )
   }
 
