@@ -149,27 +149,6 @@ object Run1 {
     }
     return res
   }
-  def execViaSshAndPrint(
-                          hostname:String,
-                          username:String,
-                          pkfile:String,
-                          //                fingerprint:String,
-                          sConnectTimeout : Int,
-                          command:String
-                        ) : Try[CommandResult] =
-  {
-    val res = execViaSsh(hostname, username, pkfile, sConnectTimeout, command)
-    res match {
-      case scala.util.Success(value) =>
-        println("result:")
-        println(value.stdOutAsString())
-      // do nothing
-      case scala.util.Failure(ex) =>
-        log.warn(ex.toString)
-      //ok = true
-    }
-    return res
-  }
 
   def testProvision(cfg:config.Remoter) = {
     provisionViaAws(
@@ -209,7 +188,14 @@ object Run1 {
     val hostname = "ec2-54-186-244-37.us-west-2.compute.amazonaws.com"
     val sConnectTimeout = 10
     val cmd = "echo hello"
-    execViaSshAndPrint(hostname, cfg.os.username, cfg.kpFile(), sConnectTimeout, cmd)
+    val value = execViaSsh(hostname, cfg.os.username, cfg.kpFile(), sConnectTimeout, cmd)
+    value match {
+      case scala.util.Success(value) =>
+        // TODO: for logging, limit stdout and stderr to a maximum number of characters
+        println(s"status=${value.exitCode}\n\tcommand=\n\t${cmd}\n\tstdout=\n\t${value.stdOutAsString()}\n\tstderr=${value.stdErrAsString()}")
+      case scala.util.Failure(ex) =>
+        log.warn(ex.toString)
+    }
     println("sleeping")
     Thread.sleep(10000)
   }
@@ -247,7 +233,8 @@ object Run1 {
                        tag:String,
                        msBetweenPolls:Int,
                        sConnectTimeout:Int,
-                       numTries: Int
+                    numTries: Int,
+                    dryRun: Boolean
                  ) =
   {
     var cTriesLeft = numTries
@@ -255,10 +242,21 @@ object Run1 {
     while (cTriesLeft >= 1 && !done) {
       cTriesLeft -= 1
       val iTries = numTries - cTriesLeft
-      println(s"connection, try ${iTries} of ${numTries}")
+      if(dryRun) {
+        println(s"connection, try ${iTries} of ${numTries}")
+      }
       tryFindNode(group1, region, tag, cred) match {
         case Some((node,addr)) =>
-          if (execViaSshAndPrint(addr, username, pkfile, sConnectTimeout, command).isSuccess) {
+          val value = execViaSsh(addr, username, pkfile, sConnectTimeout, command)
+          if(!dryRun) {
+            value match {
+              case scala.util.Success(value) =>
+                println(s"status=${value.exitCode}\n\tcommand=\n\t${command}\n\tstdout=\n\t${value.stdOutAsString()}\n\tstderr=${value.stdErrAsString()}")
+              case scala.util.Failure(ex) =>
+                log.warn(ex.toString)
+            }
+          }
+          if (value.isSuccess) {
             done = true
           } else {
             Thread.sleep(msBetweenPolls)
@@ -345,10 +343,10 @@ object Run1 {
               throw new RuntimeException("looks like we didn't succeed in making a node")
           }
       }
-      execAndRetry(cfg.os.username, pkfile, "echo hello", cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
+      execAndRetry(cfg.os.username, pkfile, "echo hello", cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
       println("about to sync")
       //rsync(nodeaddr.get._2, cfg)
-      execAndRetry(cfg.os.username, pkfile, cmd2, cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
+      execAndRetry(cfg.os.username, pkfile, cmd2, cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
     } catch {
       case ex:Throwable =>
         val sw = new StringWriter()
