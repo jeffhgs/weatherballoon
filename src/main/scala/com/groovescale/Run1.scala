@@ -7,19 +7,6 @@ import com.amazonaws.auth.{AWSCredentials, AWSStaticCredentialsProvider, BasicAW
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model._
 import com.decodified.scalassh._
-import com.google.common.collect.ImmutableSet
-import com.google.common.collect.Iterables.{concat, getOnlyElement}
-import com.google.inject.Module
-import org.jclouds.ContextBuilder
-import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions
-import org.jclouds.compute.domain.NodeMetadata.Status
-import org.jclouds.compute.domain.{NodeMetadata, Template, TemplateBuilder}
-import org.jclouds.compute.options.TemplateOptions.Builder.{overrideLoginCredentials, runScript}
-import org.jclouds.compute.{ComputeService, ComputeServiceContext, RunNodesException}
-import org.jclouds.domain.LoginCredentials
-import org.jclouds.scriptbuilder.domain.{LiteralStatement, OsFamily, Statement, StatementList}
-import org.jclouds.scriptbuilder.statements.login.AdminAccess
-import org.jclouds.sshj.config.SshjSshClientModule
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
@@ -29,100 +16,6 @@ object Run1 {
 
   import scala.collection.JavaConverters._
 
-  def provisionViaJclouds(
-                         region : String,
-                         group1 : String,
-                         keyPair:String,
-                         stUser : String,
-                         ami : String,
-                         tag: String,
-                         cred : config.Aws
-                         ) = {
-    val props = new Properties
-    props.setProperty("jclouds.regions", region)
-    // get a context with ec2 that offers the portable ComputeService API
-    val context = ContextBuilder.newBuilder("aws-ec2")
-      .credentials(cred.id, cred.secret)
-//      .modules(ImmutableSet.of[Module](new SshjSshClientModule))
-      .overrides(props)
-      .buildView(classOf[ComputeServiceContext])
-
-    /*
-
-    // here's an example of the portable api
-    val locations = context.getComputeService.listAssignableLocations
-    println(s">> No of locations ${locations.size}")
-    import scala.collection.JavaConversions._
-    for (location <- locations) {
-      println(">>>>  " + location)
-    }
-
-    println(s">> No of locations ${locations.size}")
-    import scala.collection.JavaConversions._
-    for (location <- locations) {
-      System.out.println(">>>>  " + location)
-    }
-
-    // e.g.: {scope=REGION, id=us-west-2, description=us-west-2, parent=aws-ec2, iso3166Codes=[US-OR]}
-
-    Set<? extends Image> images = context.getComputeService().listImages();
-
-// pick the highest version of the RightScale CentOS template
-    Template template = context.getComputeService().templateBuilder().osFamily(OsFamily.CENTOS).build();
-
-// specify your own groups which already have the correct rules applied
-    template.getOptions().as(AWSEC2TemplateOptions.class).securityGroups(group1);
-
-// specify your own keypair for use in creating nodes
-    template.getOptions().as(AWSEC2TemplateOptions.class).keyPair(keyPair);
-
-// run a couple nodes accessible via group
-    Set<? extends NodeMetadata> nodes = context.getComputeService().createNodesInGroup("webserver", 2, template);
-
-// when you need access to very ec2-specific features, use the provider-specific context
-    AWSEC2Client ec2Client = AWSEC2Client.class.cast(context.getProviderSpecificContext().getApi());
-
-// ex. to get an ip and associate it with a node
-    NodeMetadata node = Iterables.get(nodes, 0);
-    String ip = ec2Client.getElasticIPAddressServices().allocateAddressInRegion(node.getLocation().getId());
-    ec2Client.getElasticIPAddressServices().associateAddressInRegion(node.getLocation().getId(),ip, node.getProviderId());
-    */
-
-    //context.close();
-    val compute = context.getComputeService
-
-    //String groupName = "sg_temp1";
-    // java.lang.IllegalArgumentException: Object 'sg_temp1' doesn't match dns naming constraints. Reason: Should have lowercase ASCII letters, numbers, or dashes.
-    val groupName = "sg-07b41d9ddf991b853"
-
-    val templateBuilder = compute.templateBuilder
-    val bootInstructions = AdminAccess.standard
-    val boot3 = getUserdataScript()
-
-    // to run commands as root, we use the runScript option in the template.
-    //templateBuilder.options(runScript(bootInstructions))
-    //templateBuilder.options(TemplateBuilder.overrideLoginPrivateKey(keyPair));
-    //templateBuilder.options(overrideLoginPrivateKey(keyPair));
-    //.privateKey(stpk)
-    templateBuilder.options(overrideLoginCredentials(LoginCredentials.builder.user(stUser).build))
-    val amiJclouds = s"${region}/${ami}"
-    templateBuilder.imageId(amiJclouds)
-
-    val template = templateBuilder.build
-    template.getOptions.as(classOf[AWSEC2TemplateOptions]).keyPair(keyPair)
-    template.getOptions.as(classOf[AWSEC2TemplateOptions]).tags(List(tag).asJava)
-    val normalString = boot3.render(OsFamily.UNIX)
-    template.getOptions.as(classOf[AWSEC2TemplateOptions]).userData(normalString.getBytes())
-
-    try {
-      val node = getOnlyElement(compute.createNodesInGroup(groupName, 1, template))
-      println(s"<< node ${node.getId}: ${node.getPrivateAddresses} ${node.getPublicAddresses}")
-    } catch {
-      case ex: RunNodesException =>
-        println(ex)
-    }
-    println("goodbye")
-  }
 
   def provisionViaAws(
                        region: String,
@@ -183,29 +76,17 @@ object Run1 {
     lines
   }
 
-  private def getUserdataScript() : StatementList = {
-    val lines = getUserdataScriptRaw()
-    var statements = lines.map{(s:String) => {new LiteralStatement(s.stripLineEnd)}}
-    new StatementList(statements: _*)
-  }
+  case class NodeMetadata(
+                           publicAddresses:Seq[String],
+                           status:String,
+                           tags:Seq[String])
 
   def listNodesViaJclouds(
                            group1 : String,
                            cred : config.Aws
                          ) : Seq[NodeMetadata] =
   {
-    val props = new Properties
-    props.setProperty("jclouds.regions", "us-west-2")
-    // get a context with ec2 that offers the portable ComputeService API
-    val context = ContextBuilder.newBuilder("aws-ec2")
-      .credentials(cred.id, cred.secret)
-      .modules(ImmutableSet.of[Module](new SshjSshClientModule))
-      .overrides(props)
-      .buildView(classOf[ComputeServiceContext])
-    val compute = context.getComputeService
-
-    (for(node <- compute.listNodes.iterator().asScala)
-      yield node.asInstanceOf[NodeMetadata]).toList
+    Seq()
   }
 
   def execViaSsh(
@@ -274,7 +155,7 @@ object Run1 {
   }
 
   def testProvision(cfg:config.Remoter) = {
-    provisionViaJclouds(
+    provisionViaAws(
       cfg.region,
       cfg.group1,
       cfg.keyPair,
@@ -292,9 +173,8 @@ object Run1 {
     println(s">> No of nodes ${nodes.size}")
     import scala.collection.JavaConversions._
     for (node <- nodes) {
-      val sg = node.getUserMetadata()
       println(">>>>  " + node)
-      if(node.getTags.contains(cfg.tag)) {
+      if(node.tags.contains(cfg.tag)) {
         println("woot!")
       }
     }
@@ -324,12 +204,12 @@ object Run1 {
                  ) : Option[(NodeMetadata,String)] =
   {
     val nodesRemoter1 = listNodesViaJclouds(group1, cred).filter(node =>
-      (node.getTags.contains(tag) &&
-        (node.getStatus() == Status.RUNNING || node.getStatus() == Status.PENDING))
+      (node.tags.contains(tag) &&
+        (node.status == "RUNNING" || node.status == "PENDING"))
     )
     if (nodesRemoter1.nonEmpty) {
       val node = nodesRemoter1.head
-      node.getPublicAddresses.toArray() match {
+      node.publicAddresses.toArray match {
         case Array(addr: String, _*) =>
           Some((node, addr))
         case Array() =>

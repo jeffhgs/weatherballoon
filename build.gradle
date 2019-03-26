@@ -25,9 +25,6 @@ dependencies {
     zinc 'com.typesafe.zinc:zinc:0.3.9'
 
     compile 'com.decodified:scala-ssh_2.11:0.9.0'
-    compile 'org.apache.jclouds:jclouds-compute:2.1.0'
-    compile 'org.apache.jclouds:jclouds-allcompute:2.1.0'
-    compile 'org.apache.jclouds.labs:dimensiondata-cloudcontrol:2.1.0'
 
     compile 'com.amazonaws:aws-java-sdk-ec2:1.11.496'
 
