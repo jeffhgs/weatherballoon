@@ -22,7 +22,7 @@ import org.jclouds.scriptbuilder.statements.login.AdminAccess
 import org.jclouds.sshj.config.SshjSshClientModule
 import org.slf4j.LoggerFactory
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 object Run1 {
   val log = LoggerFactory.getLogger(Run1.getClass())
@@ -391,8 +391,31 @@ object Run1 {
     )
   }
 
+  def rcloneUp(cfg:config.Remoter) : Try[Int] = {
+    import scala.sys.process._
+    val cmd = Seq(
+      "env", s"AWS_ACCESS_KEY_ID=${cfg.cred.id}",
+      s"AWS_SECRET_ACCESS_KEY=${cfg.cred.secret}",
+      "RCLONE_CONFIG_MYS3_TYPE=s3",
+      "rclone", "--s3-env-auth", "--s3-region", "us-west-2",
+      "--exclude", ".git/", "--exclude", ".idea/", "--exclude", "build/", "--exclude", "out/", "--exclude", ".gradle/",
+      "sync", cfg.sync.adirFrom, s"mys3:${cfg.sync.adirRemote}"
+    )
+    val status = cmd.!
+    if(status==0) Success(0) else Failure(new RuntimeException(s"status=${status}"))
+  }
+
   def testProvisionRun(cfg:config.Remoter) = {
     log.info("hello")
+
+    val idrun = System.currentTimeMillis()
+    val cmd1 =
+      "/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:weatherballoon-test1/srchome /home/ubuntu/srchome" +
+      " && rm -rf /home/ubuntu/srchome/log" +
+      " && mkdir -p /home/ubuntu/srchome/log" +
+      " && cd /home/ubuntu/srchome " +
+      " && (bash ./gradlew jar 2>&1 | tee -a /home/ubuntu/srchome/log/build.log )" +
+      s" && /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync /home/ubuntu/srchome/log mys3:weatherballoon-test1/log/${idrun} "
     val pkfile = new File(System.getenv("HOME"), ".ssh/id_gs_temp_2019-01").toString()
 
     val cmd = s"(echo about to sleep && sleep 60 && echo done sleeping) | tee -a /tmp/test_nn_${System.currentTimeMillis()}.log"
@@ -402,6 +425,8 @@ object Run1 {
     val sConnectTimeout = 5000
 
     try {
+      rcloneUp(cfg)
+
       var nodeaddr : Option[(NodeMetadata,String)] = None
       tryFindNode(cfg.group1, cfg.tag, cfg.cred) match {
         case Some((node, addr)) =>
@@ -422,8 +447,8 @@ object Run1 {
       }
       execAndRetry(cfg.os.username, pkfile, "echo hello", cfg.group1, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
       println("about to sync")
-      rsync(nodeaddr.get._2, cfg)
-      execAndRetry(cfg.os.username, pkfile, cmd, cfg.group1, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
+      //rsync(nodeaddr.get._2, cfg)
+      execAndRetry(cfg.os.username, pkfile, cmd1, cfg.group1, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
     } catch {
       case ex:Throwable =>
         val sw = new StringWriter()
@@ -438,24 +463,35 @@ object Run1 {
   }
 
   def getCfg() = {
-    val adirProp = System.getProperties().getProperty("user.dir")
-    val os = config.Os(
-      ami = "ami-0e3e4660d8725dd31",
-      stUser = "ubuntu",
-      username = "ubuntu"
-    )
-    config.Remoter(
-      region="us-west-2",
-      group1="sg_temp1",
-      cred = config.Aws("AKI.................", "........................................"),
-      tag = "Remoter",
-      keyPair = "id_gs_temp_2019-01",
-      os = os,
-      sync = config.Sync(
-        adirFrom = adirProp,
-        adirRemote = s"/home/${os.username}/remoter",
-        fileExcludes = new File(adirProp, ".rsync_excludes").toString
-      )
+    val adirHome = System.getenv("HOME")
+
+    import org.json4s._
+
+    import org.json4s.jackson.Serialization.{read, write}
+    import config.formats
+    var cfg : config.Remoter = null
+    try {
+      val afileConfig = new File(new File(adirHome), ".weatherballoon.json")
+      val textConfig = io.Source.fromFile(afileConfig).mkString
+      cfg = read[config.Remoter](textConfig)
+    } catch {
+      case ex:Throwable =>
+        throw new RuntimeException("could not parse configuration: ",ex)
+    }
+    var cred : config.Aws = null
+    try {
+      val afileCred = new File(new File(adirHome), ".weatherballoon_cred.json")
+      val textCred = io.Source.fromFile(afileCred).mkString
+      cred = read[config.Aws](textCred)
+    } catch {
+      case ex:Throwable =>
+        throw new RuntimeException("could not parse credentials: ",ex)
+    }
+    println(s"cfg=${cfg}")
+    println(s"cred=${cred}")
+    cfg.copy(
+      sync=cfg.sync.copy(adirFrom=System.getProperty("user.dir")),
+      cred=cred
     )
   }
 

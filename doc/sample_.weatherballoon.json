@@ -1,0 +1,17 @@
+{
+  "region": "us-west-2",
+  "group1": "sg_temp1",
+  "tag": "Remoter",
+  "keyPair": "id_gs_temp_2019-01",
+  "os": {
+    "ami": "ami-0e3e4660d8725dd31",
+    "stUser": "ubuntu",
+    "username": "ubuntu"
+  },
+  "cred": null,
+  "sync": {
+    "adirFrom": null,
+    "fileExcludes": null,
+    "adirRemote": "weatherballoon-test1/srchome"
+  }
+}

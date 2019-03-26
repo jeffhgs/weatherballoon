@@ -34,4 +34,12 @@ object config {
       new File(new File(System.getenv("HOME"), ".ssh"), keyPair).toString()
     }
   }
+
+  import org.json4s._
+  import org.json4s.jackson.JsonMethods._
+
+  implicit val formats = (DefaultFormats
+    + FieldSerializer[Aws]()
+    + FieldSerializer[Os]()
+    + FieldSerializer[Remoter]())
 }
