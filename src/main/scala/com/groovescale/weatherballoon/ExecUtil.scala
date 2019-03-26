@@ -102,13 +102,10 @@ object ExecUtil {
   }
 
   def execAndRetry(
-                    username: String,
-                    pkfile: String,
+                    provider: config.AwsProvider,
                     //                fingerprint:String,
+                    pkfile:String,
                     command: String,
-                    group1:String,
-                    region:String,
-                    cred:config.AwsCred,
                     tag:String,
                     msBetweenPolls:Int,
                     sConnectTimeout:Int,
@@ -125,9 +122,9 @@ object ExecUtil {
         log.info(s"connection, try ${iTries} of ${numTries}")
       }
       // TODO: make ExecUtil not depend on ImplAws
-      AwsProvisioner.tryFindNode(region, tag, cred) match {
+      AwsProvisioner.tryFindNode(provider, tag) match {
         case Some((node,addr)) =>
-          val value = execViaSsh(addr, username, pkfile, sConnectTimeout, command)
+          val value = execViaSsh(addr, provider.os.username, pkfile, sConnectTimeout, command)
           if(!dryRun) {
             value match {
               case scala.util.Success(value) =>

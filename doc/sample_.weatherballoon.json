@@ -1,17 +1,19 @@
 {
-  "region": "us-west-2",
-  "group1": "sg_temp1",
+  "provider":{
+    "kind": "aws",
+    "region": "us-west-2",
+    "group1": "sg_temp1",
+    "keyPair": "id_gs_temp_2019-01",
+    "os": {
+      "ami": "ami-0e3e4660d8725dd31",
+      "username": "ubuntu"
+    },
+    "instanceType": "t2.medium",
+    "cred": null,
+    "roleOfInstance":
+      "arn:aws:iam::............:instance-profile/weatherballoon-ec2-accesses-s3all"
+  },
   "tag": "Remoter",
-  "keyPair": "id_gs_temp_2019-01",
-  "os": {
-    "ami": "ami-0e3e4660d8725dd31",
-    "username": "ubuntu"
-  },
-  "instanceType": "t2.medium",
-  "cred": null,
-  "roleOfInstance": {
-    "arn":"arn:aws:iam::............:instance-profile/can_terminateInstances2"
-  },
   "sync": {
     "adirLocal": null,
     "fileExcludes": null,

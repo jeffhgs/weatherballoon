@@ -8,19 +8,26 @@ object config {
                         secret:String
                       )
 
-  case class AwsRole(
-                      arn:String
-                    )
-  {
-    def name : String = {
-      arn.split("/").last
-    }
-  }
-
-  case class Os(
+  case class AwsOs(
                        val ami: String,
                        val username: String
                      )
+
+  case class AwsProvider(
+                          val kind: String = "aws",
+                          val region: String,
+                          val group1: String,
+                          val cred: config.AwsCred,
+                          val roleOfInstance: String,
+                          val keyPair: String,
+                          val instanceType: String,
+                          val os: config.AwsOs
+                        )
+  {
+    def nameOfRole : String = {
+      roleOfInstance.split("/").last
+    }
+  }
 
   case class Sync(
                  adirLocal:String,
@@ -30,19 +37,13 @@ object config {
                  )
 
   case class Remoter(
-                      val region: String,
-                      val group1: String,
-                      val cred: config.AwsCred,
-                      val roleOfInstance: config.AwsRole,
+                      val provider: AwsProvider,
                       val tag: String,
-                      val keyPair: String,
-                      val instanceType: String,
-                      val os: config.Os,
                       val sync:Sync
                           )
   {
     def kpFile() = {
-      new File(new File(System.getenv("HOME"), ".ssh"), keyPair).toString()
+      new File(new File(System.getenv("HOME"), ".ssh"), provider.keyPair).toString()
     }
   }
 
@@ -50,6 +51,6 @@ object config {
 
   implicit val formats = (DefaultFormats
     + FieldSerializer[AwsCred]()
-    + FieldSerializer[Os]()
+    + FieldSerializer[AwsOs]()
     + FieldSerializer[Remoter]())
 }

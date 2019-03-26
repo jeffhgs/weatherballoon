@@ -49,8 +49,8 @@ object ConfigUtil {
       throw new RuntimeException("no credentials found")
     }
     cfg.copy(
-      sync=cfg.sync.copy(adirLocal=System.getProperty("user.dir")),
-      cred=cred
+      provider=cfg.provider.copy(cred=cred),
+      sync=cfg.sync.copy(adirLocal=System.getProperty("user.dir"))
     )
   }
 

@@ -25,16 +25,16 @@ object SyncUtil {
 
   def cmdRsync(ipaddr:String, cfg:config.Remoter) : Seq[String] = {
     Seq(
-      "env", s"RSYNC_RSH=ssh -i ${cfg.kpFile()} -l ${cfg.os.username} -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null",
-      "rsync", s"--exclude-from=${cfg.sync.fileExcludes}", "--verbose", "-r", s"${cfg.sync.adirLocal}/", s"${cfg.os.username}@${ipaddr}:${cfg.sync.adirServer}/"
+      "env", s"RSYNC_RSH=ssh -i ${cfg.kpFile()} -l ${cfg.provider.os.username} -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null",
+      "rsync", s"--exclude-from=${cfg.sync.fileExcludes}", "--verbose", "-r", s"${cfg.sync.adirLocal}/", s"${cfg.provider.os.username}@${ipaddr}:${cfg.sync.adirServer}/"
     )
   }
 
   def rcloneUp(cfg:config.Remoter) : Try[Int] = {
     import scala.sys.process._
     val cmd = Seq(
-      "env", s"AWS_ACCESS_KEY_ID=${cfg.cred.id}",
-      s"AWS_SECRET_ACCESS_KEY=${cfg.cred.secret}",
+      "env", s"AWS_ACCESS_KEY_ID=${cfg.provider.cred.id}",
+      s"AWS_SECRET_ACCESS_KEY=${cfg.provider.cred.secret}",
       "RCLONE_CONFIG_MYS3_TYPE=s3",
       "rclone",
       "--config", "/dev/null",
