@@ -13,7 +13,7 @@
   "sync": {
     "adirLocal": null,
     "fileExcludes": null,
-    "adirRemote": "/home/ubuntu/srchome",
-    "adirStorage": "weatherballoon-test1/srchome"
+    "adirServer": "/home/ubuntu/srchome",
+    "dirStorage": "weatherballoon-test1"
   }
 }

@@ -287,7 +287,7 @@ object Run1 {
   def cmdRsync(ipaddr:String, cfg:config.Remoter) : Seq[String] = {
     Seq(
       "env", s"RSYNC_RSH=ssh -i ${cfg.kpFile()} -l ${cfg.os.username} -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null",
-      "rsync", s"--exclude-from=${cfg.sync.fileExcludes}", "--verbose", "-r", s"${cfg.sync.adirLocal}/", s"${cfg.os.username}@${ipaddr}:${cfg.sync.adirRemote}/"
+      "rsync", s"--exclude-from=${cfg.sync.fileExcludes}", "--verbose", "-r", s"${cfg.sync.adirLocal}/", s"${cfg.os.username}@${ipaddr}:${cfg.sync.adirServer}/"
     )
   }
 
@@ -311,12 +311,12 @@ object Run1 {
     val idrun = System.currentTimeMillis()
     val cmd1 = cmd0.mkString(" ")
     val cmd2 =
-      s"/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:${cfg.sync.dirStorage}/srchome ${cfg.sync.adirRemote}" +
-      s" && rm -rf ${cfg.sync.adirRemote}/log" +
-      s" && mkdir -p ${cfg.sync.adirRemote}/log" +
-      s" && cd ${cfg.sync.adirRemote} " +
-      s" && (${cmd1} 2>&1 | tee -a ${cfg.sync.adirRemote}/log/build.log )" +
-      s" && /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirRemote}/log mys3:${cfg.sync.dirStorage}/log/${idrun} "
+      s"/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:${cfg.sync.dirStorage}/srchome ${cfg.sync.adirServer}" +
+      s" && rm -rf ${cfg.sync.adirServer}/log" +
+      s" && mkdir -p ${cfg.sync.adirServer}/log" +
+      s" && cd ${cfg.sync.adirServer} " +
+      s" && (${cmd1} 2>&1 | tee -a ${cfg.sync.adirServer}/log/build.log )" +
+      s" && /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirServer}/log mys3:${cfg.sync.dirStorage}/log/${idrun} "
     val pkfile = new File(System.getenv("HOME"), ".ssh/id_gs_temp_2019-01").toString()
 
     val numTries = 50

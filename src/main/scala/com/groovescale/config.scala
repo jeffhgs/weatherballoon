@@ -16,7 +16,7 @@ object config {
 
   case class Sync(
                  adirLocal:String,
-                 adirRemote:String,
+                 adirServer:String,
                  dirStorage:String,
                  fileExcludes:String
                  )
