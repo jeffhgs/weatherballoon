@@ -311,12 +311,12 @@ object Run1 {
     val idrun = System.currentTimeMillis()
     val cmd1 = cmd0.mkString(" ")
     val cmd2 =
-      "/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:weatherballoon-test1/srchome /home/ubuntu/srchome" +
-      " && rm -rf /home/ubuntu/srchome/log" +
-      " && mkdir -p /home/ubuntu/srchome/log" +
-      " && cd /home/ubuntu/srchome " +
-      s" && (${cmd1} 2>&1 | tee -a /home/ubuntu/srchome/log/build.log )" +
-      s" && /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync /home/ubuntu/srchome/log mys3:weatherballoon-test1/log/${idrun} "
+      s"/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:weatherballoon-test1/srchome ${cfg.sync.adirRemote}" +
+      s" && rm -rf ${cfg.sync.adirRemote}/log" +
+      s" && mkdir -p ${cfg.sync.adirRemote}/log" +
+      s" && cd ${cfg.sync.adirRemote} " +
+      s" && (${cmd1} 2>&1 | tee -a ${cfg.sync.adirRemote}/log/build.log )" +
+      s" && /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirRemote}/log mys3:weatherballoon-test1/log/${idrun} "
     val pkfile = new File(System.getenv("HOME"), ".ssh/id_gs_temp_2019-01").toString()
 
     val numTries = 50
