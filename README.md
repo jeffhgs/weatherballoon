@@ -70,9 +70,19 @@ Current supported cloud compute services are:
 
 ## Installation Instructions
 
-  - 1) Unzip the distribution (currently 3 files) into a location in your path
-  - 2) Install rclone
-  - 3) run weatherballoon.sh
+  - 1 - Unzip the distribution (currently 3 files) into a location in your path
+  - 2 - Install rclone
+  - 3 - run weatherballoon.sh
+
+## Usage
+
+At this time, all weatherballoon configuration is done using the configuration files.
+
+Weatherballoon command line invocation is as follows:
+
+    weatherballoon.sh -- <command to run remotely>
+
+If a remote compute instance is currently available, it will be used to run the command.  If no remote compute instance is available, one will be created, and then used to run the command.
 
 ### Configuration
 
@@ -83,19 +93,21 @@ Weatherballoon finds the <code>.weatherballoon.json</code> file starting with th
 An example <code>.weatherballoon.json</code> file is located in doc/sample_.weatherballoon.json:
 
     {
-      "region": "us-west-2",
-      "group1": "sg_temp1",
+      "provisioner":{
+        "kind": "aws",
+        "region": "us-west-2",
+        "group1": "sg_temp1",
+        "keyPair": "id_gs_temp_2019-01",
+        "os": {
+          "ami": "ami-0e3e4660d8725dd31",
+          "username": "ubuntu"
+        },
+        "instanceType": "t2.medium",
+        "cred": null,
+        "roleOfInstance":
+          "arn:aws:iam::............:instance-profile/weatherballoon-ec2-accesses-s3all"
+      },
       "tag": "Remoter",
-      "keyPair": "id_gs_temp_2019-01",
-      "os": {
-        "ami": "ami-0e3e4660d8725dd31",
-        "username": "ubuntu"
-      },
-      "instanceType": "t2.medium",
-      "cred": null,
-      "roleOfInstance": {
-        "arn":"arn:aws:iam::............:instance-profile/can_terminateInstances2"
-      },
       "sync": {
         "adirLocal": null,
         "fileExcludes": null,
@@ -196,16 +208,9 @@ Note that the arn in the policy contains "role/" not "instance-policy/".
 
 Note that the "*" can be further restricted to passing of the specific role you have created.
 
-## Usage
-
-At this time, all weatherballoon configuration is done using the configuration files.
-
-Weatherballoon command line invocation is as follows:
-
-    weatherballoon.sh -- <command to run remotely>
-
 ## Known Issues
 
+  - The number of minutes before termination is hardcoded as numMinutes=15 in <code>src/main/resources/file/install_heartbeat_cron.sh</code>
   - Credentials cannot be encrypted
   - There is only one cloud provisioner  (AWS)
 
