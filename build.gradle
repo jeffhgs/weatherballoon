@@ -31,6 +31,7 @@ dependencies {
     compile 'org.json4s:json4s-jackson_2.11:3.6.4'
 
     testCompile 'org.scalatest:scalatest_2.11:3.0.5'
+    testCompile 'junit:junit:4.12'
 
     compile 'net.logstash.logback:logstash-logback-encoder:5.2'
     compile 'ch.qos.logback:logback-classic:1.2.3'
@@ -55,6 +56,14 @@ task(runJce, type: JavaExec) {
 task copyDependencies(type: Copy) {
     from configurations.compile
     into "$project.rootDir/reports/libs/"
+}
+
+test {
+    //useJUnit()
+    testLogging {
+        // Show that tests are run in the command-line output
+        events 'started', 'passed'
+    }
 }
 
 shadowJar {
