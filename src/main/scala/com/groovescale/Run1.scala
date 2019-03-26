@@ -304,20 +304,19 @@ object Run1 {
     if(status==0) Success(0) else Failure(new RuntimeException(s"status=${status}"))
   }
 
-  def testProvisionRun(cfg:config.Remoter) = {
+  def testProvisionRun(cmd0:Array[String], cfg:config.Remoter) = {
     log.info("hello")
 
     val idrun = System.currentTimeMillis()
-    val cmd1 =
+    val cmd1 = cmd0.mkString(" ")
+    val cmd2 =
       "/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:weatherballoon-test1/srchome /home/ubuntu/srchome" +
       " && rm -rf /home/ubuntu/srchome/log" +
       " && mkdir -p /home/ubuntu/srchome/log" +
       " && cd /home/ubuntu/srchome " +
-      " && (bash ./gradlew jar 2>&1 | tee -a /home/ubuntu/srchome/log/build.log )" +
+      s" && (${cmd1} 2>&1 | tee -a /home/ubuntu/srchome/log/build.log )" +
       s" && /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh can_terminateInstances2 /usr/local/bin/rclone.sh --s3-region us-west-2 sync /home/ubuntu/srchome/log mys3:weatherballoon-test1/log/${idrun} "
     val pkfile = new File(System.getenv("HOME"), ".ssh/id_gs_temp_2019-01").toString()
-
-    val cmd = s"(echo about to sleep && sleep 60 && echo done sleeping) | tee -a /tmp/test_nn_${System.currentTimeMillis()}.log"
 
     val numTries = 50
     val msBetweenPolls = 5000
@@ -347,7 +346,7 @@ object Run1 {
       execAndRetry(cfg.os.username, pkfile, "echo hello", cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
       println("about to sync")
       //rsync(nodeaddr.get._2, cfg)
-      execAndRetry(cfg.os.username, pkfile, cmd1, cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
+      execAndRetry(cfg.os.username, pkfile, cmd2, cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
     } catch {
       case ex:Throwable =>
         val sw = new StringWriter()
@@ -395,11 +394,12 @@ object Run1 {
   }
 
   def main(args: Array[String]): Unit = {
+    val cmd = args
     val cfg = getCfg()
 //    testListNodes(cfg)
 //    testFindNode(cfg)
 //    testProvision(cfg)
 //    testSsh(cfg)
-    testProvisionRun(cfg)
+    testProvisionRun(cmd, cfg)
   }
 }

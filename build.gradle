@@ -39,6 +39,13 @@ task(run1, type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
+task(run2, type: JavaExec) {
+    main = 'com.groovescale.Run1'
+    args = ["bash", "./gradlew", "jar"]
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+
 shadowJar {
     mainClassName = 'com.groovescale.Run1'
     baseName = 'weatherballoon_shadow'
