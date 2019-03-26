@@ -3,7 +3,7 @@ package com.groovescale
 import java.io.File
 
 object config {
-  case class Aws(
+  case class AwsCred(
                         id:String,
                         secret:String
                       )
@@ -21,14 +21,14 @@ object config {
                  )
 
   case class Remoter(
-                            val region: String,
-                            val group1: String,
-                            val cred: config.Aws,
-                            val tag: String,
-                            val keyPair: String,
-                            val instanceType: String,
-                            val os: config.Os,
-                            val sync:Sync
+                      val region: String,
+                      val group1: String,
+                      val cred: config.AwsCred,
+                      val tag: String,
+                      val keyPair: String,
+                      val instanceType: String,
+                      val os: config.Os,
+                      val sync:Sync
                           )
   {
     def kpFile() = {
@@ -40,7 +40,7 @@ object config {
   import org.json4s.jackson.JsonMethods._
 
   implicit val formats = (DefaultFormats
-    + FieldSerializer[Aws]()
+    + FieldSerializer[AwsCred]()
     + FieldSerializer[Os]()
     + FieldSerializer[Remoter]())
 }

@@ -25,7 +25,7 @@ object Run1 {
                        stUser: String,
                        ami: String,
                        tag: String,
-                       cred: config.Aws
+                       cred: config.AwsCred
                      ) = {
     val runInstancesRequest = new RunInstancesRequest();
     import java.nio.charset.StandardCharsets
@@ -86,7 +86,7 @@ object Run1 {
   def listNodesViaAws(
                            group1 : String,
                            region: String,
-                           cred : config.Aws
+                           cred : config.AwsCred
                          ) : Seq[NodeMetadata] =
   {
     val req = new DescribeInstancesRequest()
@@ -253,7 +253,7 @@ object Run1 {
                  group1:String,
                  region:String,
                  tag:String,
-                 cred:config.Aws
+                 cred:config.AwsCred
                  ) : Option[(NodeMetadata,String)] =
   {
     val nodesRemoter1 = listNodesViaAws(group1, region, cred).filter(node =>
@@ -278,7 +278,7 @@ object Run1 {
                        command: String,
                        group1:String,
                        region:String,
-                       cred:config.Aws,
+                       cred:config.AwsCred,
                        tag:String,
                        msBetweenPolls:Int,
                        sConnectTimeout:Int,
@@ -434,11 +434,11 @@ object Run1 {
       case ex:Throwable =>
         throw new RuntimeException("could not parse configuration: ",ex)
     }
-    var cred : config.Aws = null
+    var cred : config.AwsCred = null
     try {
       val afileCred = findCfg(".weatherballoon_cred.json")
       val textCred = io.Source.fromFile(afileCred).mkString
-      cred = read[config.Aws](textCred)
+      cred = read[config.AwsCred](textCred)
     } catch {
       case ex:Throwable =>
         throw new RuntimeException("could not parse credentials: ",ex)
