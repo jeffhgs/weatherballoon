@@ -21,6 +21,7 @@ object Run1 {
                        region: String,
                        group1: String,
                        keyPair: String,
+                       instanceType: String,
                        stUser: String,
                        ami: String,
                        tag: String,
@@ -41,6 +42,7 @@ object Run1 {
       .withKeyName(keyPair)
       .withSecurityGroups(group1)
       .withUserData(encodedString)
+      .withInstanceType(instanceType)
       .withTagSpecifications(
         new TagSpecification()
           .withResourceType(ResourceType.Instance)
@@ -155,6 +157,7 @@ object Run1 {
       cfg.region,
       cfg.group1,
       cfg.keyPair,
+      cfg.instanceType,
       cfg.os.stUser,
       cfg.os.ami,
       cfg.tag,
@@ -331,7 +334,7 @@ object Run1 {
         case None =>
           // presume we should make a node
           log.info("looks like we should make a node")
-          provisionViaAws(cfg.region, cfg.group1, cfg.keyPair, cfg.os.stUser, cfg.os.ami, cfg.tag, cfg.cred)
+          provisionViaAws(cfg.region, cfg.group1, cfg.keyPair, cfg.instanceType, cfg.os.stUser, cfg.os.ami, cfg.tag, cfg.cred)
           Thread.sleep(10000)
           tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred) match {
             case Some((node, addr)) =>

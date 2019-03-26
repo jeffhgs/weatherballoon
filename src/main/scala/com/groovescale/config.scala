@@ -26,6 +26,7 @@ object config {
                             val cred: config.Aws,
                             val tag: String,
                             val keyPair: String,
+                            val instanceType: String,
                             val os: config.Os,
                             val sync:Sync
                           )

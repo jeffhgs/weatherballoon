@@ -8,6 +8,7 @@
     "stUser": "ubuntu",
     "username": "ubuntu"
   },
+  "instanceType": "t2.medium",
   "cred": null,
   "sync": {
     "adirFrom": null,
