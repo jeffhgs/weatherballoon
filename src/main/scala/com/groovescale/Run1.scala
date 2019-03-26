@@ -139,6 +139,24 @@ object Run1 {
   }
 
   def execViaSsh(
+                  hostname:String,
+                  username:String,
+                  pkfile:String,
+                  //                fingerprint:String,
+                  sConnectTimeout : Int,
+                  command:String
+                ) : Try[Int] =
+  {
+    val res = execViaSshImpl(hostname, username, pkfile, sConnectTimeout, "touch /tmp/heartbeat")
+    res match {
+      case Success(0) =>
+        return execViaSshImpl(hostname, username, pkfile, sConnectTimeout, command)
+      case _ =>
+        return res
+    }
+  }
+
+  def execViaSshImpl(
                 hostname:String,
                 username:String,
                 pkfile:String,
