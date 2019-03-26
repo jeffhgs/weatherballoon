@@ -176,11 +176,24 @@ object Run1 {
       session.connect(30000) // making a connection with timeout.
       val channel: Channel = session.openChannel("shell")
 
-      channel.setInputStream(System.in)
+      import java.io.PipedInputStream
+      import java.io.PipedOutputStream
+      val in = new PipedInputStream
+      val pin = new PipedOutputStream(in.asInstanceOf[PipedInputStream])
+
+      channel.setInputStream(in)
       channel.setOutputStream(System.out)
 
       channel.connect(3 * 1000)
-      Thread.sleep(60000)
+      pin.write(command.getBytes)
+      pin.write("\n".getBytes())
+      pin.write("exit\n".getBytes())
+      pin.flush()
+      while(!channel.isClosed) {
+        log.info("sleeping")
+        Thread.sleep(1000)
+      }
+      log.info("shell channel is now disconnected")
 
       /*
       log.info("about to connect via jsch")
