@@ -15,8 +15,8 @@ object UserdataUtil {
 
   def getUserdataScriptRaw() : Seq[String] = {
     val scriptBig = Seq(
-      "/file/install_heartbeat_cron.sh",
-      "/file/install_deps.sh"
+      "/file/install_deps.sh",
+      "/file/install_heartbeat_cron.sh"
     ).flatMap(getUserdataScript)
     val lines = (Seq("#!/usr/bin/env bash") ++ scriptBig)
     lines
