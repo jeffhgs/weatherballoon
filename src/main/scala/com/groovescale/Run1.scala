@@ -386,7 +386,10 @@ object Run1 {
         throw new RuntimeException("could not parse credentials: ",ex)
     }
     println(s"cfg=${cfg}")
-    println(s"cred=${cred}")
+    if(cred==null) {
+      log.error("no credentials found")
+      throw new RuntimeException("no credentials found")
+    }
     cfg.copy(
       sync=cfg.sync.copy(adirFrom=System.getProperty("user.dir")),
       cred=cred
