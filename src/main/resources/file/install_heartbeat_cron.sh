@@ -101,3 +101,7 @@ EOF4
 
 sudo install /tmp/rclone.sh /usr/local/bin/rclone.sh
 rm -f /tmp/rclone.sh
+
+echo done >> /tmp/userdata-done
+install /tmp/userdata-done /var/log/userdata-done
+rm -f /tmp/userdata-done

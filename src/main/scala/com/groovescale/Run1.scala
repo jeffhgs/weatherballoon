@@ -259,7 +259,9 @@ object Run1 {
                 log.warn(ex.toString)
             }
           }
-          if (value.isSuccess) {
+          if (dryRun && value.isSuccess && value.get.exitCode.getOrElse(-1) == 0) {
+            done = true
+          } else if (!dryRun && value.isSuccess) {
             done = true
           } else {
             Thread.sleep(msBetweenPolls)
@@ -344,7 +346,7 @@ object Run1 {
               throw new RuntimeException("looks like we didn't succeed in making a node")
           }
       }
-      execAndRetry(cfg.os.username, pkfile, "echo hello", cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
+      execAndRetry(cfg.os.username, pkfile, "wc -c /var/log/userdata-done", cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
       execAndRetry(cfg.os.username, pkfile, cmd2, cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
     } catch {
       case ex:Throwable =>
