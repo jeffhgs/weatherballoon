@@ -11,7 +11,7 @@
   "instanceType": "t2.medium",
   "cred": null,
   "sync": {
-    "adirFrom": null,
+    "adirLocal": null,
     "fileExcludes": null,
     "adirRemote": "weatherballoon-test1/srchome"
   }

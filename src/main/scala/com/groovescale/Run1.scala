@@ -274,11 +274,11 @@ object Run1 {
     import scala.sys.process._
     if(!(new File(cfg.sync.fileExcludes).exists()))
       throw new RuntimeException(s"fileExcludes=${cfg.sync.fileExcludes} does not exist")
-    val dirFrom = new File(cfg.sync.adirFrom)
+    val dirFrom = new File(cfg.sync.adirLocal)
     if(!dirFrom.exists())
-      throw new RuntimeException(s"fileExcludes=${cfg.sync.adirFrom} does not exist")
+      throw new RuntimeException(s"fileExcludes=${cfg.sync.adirLocal} does not exist")
     if(!dirFrom.isDirectory)
-      throw new RuntimeException(s"fileExcludes=${cfg.sync.adirFrom} is not a directory")
+      throw new RuntimeException(s"fileExcludes=${cfg.sync.adirLocal} is not a directory")
     val cmd = cmdRsync(ipaddr,cfg)
     log.info(s"about to ${cmd}")
     cmd.!
@@ -287,7 +287,7 @@ object Run1 {
   def cmdRsync(ipaddr:String, cfg:config.Remoter) : Seq[String] = {
     Seq(
       "env", s"RSYNC_RSH=ssh -i ${cfg.kpFile()} -l ${cfg.os.username} -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null",
-      "rsync", s"--exclude-from=${cfg.sync.fileExcludes}", "--verbose", "-r", s"${cfg.sync.adirFrom}/", s"${cfg.os.username}@${ipaddr}:${cfg.sync.adirRemote}/"
+      "rsync", s"--exclude-from=${cfg.sync.fileExcludes}", "--verbose", "-r", s"${cfg.sync.adirLocal}/", s"${cfg.os.username}@${ipaddr}:${cfg.sync.adirRemote}/"
     )
   }
 
@@ -301,7 +301,7 @@ object Run1 {
       "--config", "/dev/null",
       "--s3-env-auth", "--s3-region", "us-west-2",
       "--exclude", ".git/", "--exclude", ".idea/", "--exclude", "build/", "--exclude", "out/", "--exclude", ".gradle/",
-      "sync", cfg.sync.adirFrom, s"mys3:${cfg.sync.adirRemote}"
+      "sync", cfg.sync.adirLocal, s"mys3:${cfg.sync.adirRemote}"
     )
     val status = cmd.!
     if(status==0) Success(0) else Failure(new RuntimeException(s"status=${status}"))
@@ -390,7 +390,7 @@ object Run1 {
       throw new RuntimeException("no credentials found")
     }
     cfg.copy(
-      sync=cfg.sync.copy(adirFrom=System.getProperty("user.dir")),
+      sync=cfg.sync.copy(adirLocal=System.getProperty("user.dir")),
       cred=cred
     )
   }
