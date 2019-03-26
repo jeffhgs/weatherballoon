@@ -1,0 +1,29 @@
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.1'
+}
+
+repositories {
+    mavenCentral()
+}
+
+apply plugin: 'scala'
+apply plugin:'application'
+
+dependencies {
+    compile 'org.scala-lang:scala-library:2.11.8'
+    zinc 'com.typesafe.zinc:zinc:0.3.9'
+
+    compile 'com.decodified:scala-ssh_2.11:0.9.0'
+    compile 'org.apache.jclouds:jclouds-compute:2.1.0'
+    compile 'org.apache.jclouds:jclouds-allcompute:2.1.0'
+    compile 'org.apache.jclouds.labs:dimensiondata-cloudcontrol:2.1.0'
+
+    compile 'net.logstash.logback:logstash-logback-encoder:5.2'
+    compile 'ch.qos.logback:logback-classic:1.2.3'
+}
+
+task(run1, type: JavaExec) {
+    main = 'com.groovescale.Run1'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
