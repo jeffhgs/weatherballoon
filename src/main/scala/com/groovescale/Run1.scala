@@ -79,14 +79,31 @@ object Run1 {
   case class NodeMetadata(
                            publicAddresses:Seq[String],
                            status:String,
-                           tags:Seq[String])
+                           tags:Seq[Tag])
 
   def listNodesViaAws(
                            group1 : String,
+                           region: String,
                            cred : config.Aws
                          ) : Seq[NodeMetadata] =
   {
-    Seq()
+    val req = new DescribeInstancesRequest()
+    val amazonEC2Client = AmazonEC2Client.builder()
+      .withRegion(region)
+      .withCredentials(
+        new AWSStaticCredentialsProvider(new BasicAWSCredentials(
+          cred.id,
+          cred.secret
+        )))
+      .build()
+    val result = amazonEC2Client.describeInstances(req)
+    for(reservation <- result.getReservations().asScala;
+        instance <- reservation.getInstances().asScala;
+        addrs = Seq(instance.getPublicIpAddress);
+        status = instance.getState.getName;
+        tags = instance.getTags.asScala.toSeq
+    )
+      yield(NodeMetadata(addrs, status, tags))
   }
 
   def execViaSsh(
@@ -169,7 +186,7 @@ object Run1 {
                      cfg:config.Remoter
                    ) =
   {
-    val nodes = listNodesViaAws(cfg.group1, cfg.cred)
+    val nodes = listNodesViaAws(cfg.group1, cfg.region, cfg.cred)
     println(s">> No of nodes ${nodes.size}")
     import scala.collection.JavaConversions._
     for (node <- nodes) {
@@ -183,7 +200,7 @@ object Run1 {
                      cfg:config.Remoter
                    ) =
   {
-    val node = tryFindNode(cfg.group1, cfg.tag, cfg.cred)
+    val node = tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred)
     println(">>>>  " + node)
   }
 
@@ -199,13 +216,14 @@ object Run1 {
 
   def tryFindNode(
                  group1:String,
+                 region:String,
                  tag:String,
                  cred:config.Aws
                  ) : Option[(NodeMetadata,String)] =
   {
-    val nodesRemoter1 = listNodesViaAws(group1, cred).filter(node =>
-      (node.tags.contains(tag) &&
-        (node.status == "RUNNING" || node.status == "PENDING"))
+    val nodesRemoter1 = listNodesViaAws(group1, region, cred).filter(node =>
+      (node.tags.exists(t => t.getKey.equals(tag)) &&
+        (node.status == "running" || node.status == "pending"))
     )
     if (nodesRemoter1.nonEmpty) {
       val node = nodesRemoter1.head
@@ -224,6 +242,7 @@ object Run1 {
                        //                fingerprint:String,
                        command: String,
                        group1:String,
+                       region:String,
                        cred:config.Aws,
                        tag:String,
                        msBetweenPolls:Int,
@@ -237,7 +256,7 @@ object Run1 {
       cTriesLeft -= 1
       val iTries = numTries - cTriesLeft
       println(s"connection, try ${iTries} of ${numTries}")
-      tryFindNode(group1, tag, cred) match {
+      tryFindNode(group1, region, tag, cred) match {
         case Some((node,addr)) =>
           if (execViaSshAndPrint(addr, username, pkfile, sConnectTimeout, command).isSuccess) {
             done = true
@@ -308,7 +327,7 @@ object Run1 {
       rcloneUp(cfg)
 
       var nodeaddr : Option[(NodeMetadata,String)] = None
-      tryFindNode(cfg.group1, cfg.tag, cfg.cred) match {
+      tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred) match {
         case Some((node, addr)) =>
           nodeaddr = Some((node, addr))
         // do nothing
@@ -317,7 +336,7 @@ object Run1 {
           println("looks like we should make a node")
           provisionViaAws(cfg.region, cfg.group1, cfg.keyPair, cfg.os.stUser, cfg.os.ami, cfg.tag, cfg.cred)
           Thread.sleep(10000)
-          tryFindNode(cfg.group1, cfg.tag, cfg.cred) match {
+          tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred) match {
             case Some((node, addr)) =>
               // now there will eventually be a node
               nodeaddr = Some((node, addr))
@@ -325,10 +344,10 @@ object Run1 {
               throw new RuntimeException("looks like we didn't succeed in making a node")
           }
       }
-      execAndRetry(cfg.os.username, pkfile, "echo hello", cfg.group1, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
+      execAndRetry(cfg.os.username, pkfile, "echo hello", cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
       println("about to sync")
       //rsync(nodeaddr.get._2, cfg)
-      execAndRetry(cfg.os.username, pkfile, cmd1, cfg.group1, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
+      execAndRetry(cfg.os.username, pkfile, cmd1, cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
     } catch {
       case ex:Throwable =>
         val sw = new StringWriter()
