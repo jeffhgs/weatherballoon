@@ -73,3 +73,28 @@ shadowJar {
     version = null
 }
 shadowJar.dependsOn 'copyDependencies'
+
+task copyForZip1(type:Copy) {
+    from file("$project.rootDir/reports/libs/bcprov-jdk15on-1.56.jar")
+    into file("$project.rootDir/build/zip")   
+}
+copyForZip1.dependsOn 'copyDependencies'
+task copyForZip2(type:Copy) {
+    from file("$project.rootDir/build/libs/weatherballoon_shadow.jar")
+    into file("$project.rootDir/build/zip")   
+}
+copyForZip2.dependsOn 'shadowJar'
+task copyForZip3(type:Copy) {
+    from file("$project.rootDir/bin/weatherballoon.sh")
+    into file("$project.rootDir/build/zip")   
+}
+task zip(type: Zip) {
+   from 'build/zip'
+   include '*'
+   include '*/*' //to include contents of a folder present inside Reports directory
+   archiveName 'dist.zip'
+   destinationDir(file('build'))
+}
+zip.dependsOn 'copyForZip1'
+zip.dependsOn 'copyForZip2'
+zip.dependsOn 'copyForZip3'
