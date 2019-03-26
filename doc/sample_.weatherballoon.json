@@ -5,7 +5,6 @@
   "keyPair": "id_gs_temp_2019-01",
   "os": {
     "ami": "ami-0e3e4660d8725dd31",
-    "stUser": "ubuntu",
     "username": "ubuntu"
   },
   "instanceType": "t2.medium",

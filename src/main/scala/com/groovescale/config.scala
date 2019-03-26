@@ -10,8 +10,7 @@ object config {
 
   case class Os(
                        val ami: String,
-                       val username: String,
-                       val stUser: String
+                       val username: String
                      )
 
   case class Sync(
