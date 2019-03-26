@@ -21,7 +21,7 @@ class TestAws extends JUnitSuite {
 
   def testProvision(cfg:config.Remoter) = {
     AwsProvisioner.provisionViaAws(
-      cfg.provider,
+      cfg.provisioner,
       cfg.tag
     )
   }
@@ -29,7 +29,7 @@ class TestAws extends JUnitSuite {
                      cfg:config.Remoter
                    ) =
   {
-    val nodes = AwsProvisioner.listNodesViaAws(cfg.provider)
+    val nodes = AwsProvisioner.listNodesViaAws(cfg.provisioner)
     log.info(s">> No of nodes ${nodes.size}")
     for (node <- nodes) {
       log.info(">>>>  " + node)
@@ -42,7 +42,7 @@ class TestAws extends JUnitSuite {
                     cfg:config.Remoter
                   ) =
   {
-    val node = AwsProvisioner.tryFindNode(cfg.provider, cfg.tag)
+    val node = AwsProvisioner.tryFindNode(cfg.provisioner, cfg.tag)
     log.info(">>>>  " + node)
   }
 
@@ -51,7 +51,7 @@ class TestAws extends JUnitSuite {
     val hostname = "ec2-54-186-244-37.us-west-2.compute.amazonaws.com"
     val sConnectTimeout = 10
     val cmd = "echo hello"
-    val value = ExecUtil.execViaSsh(hostname, cfg.provider.os.username, cfg.kpFile(), sConnectTimeout, cmd)
+    val value = ExecUtil.execViaSsh(hostname, cfg.provisioner.os.username, cfg.kpFile(), sConnectTimeout, cmd)
     value match {
       case scala.util.Success(value) =>
         // TODO: for logging, limit stdout and stderr to a maximum number of characters

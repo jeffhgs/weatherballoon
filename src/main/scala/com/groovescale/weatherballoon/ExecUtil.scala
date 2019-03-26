@@ -102,7 +102,7 @@ object ExecUtil {
   }
 
   def execAndRetry(
-                    provider: config.AwsProvider,
+                    provisioner: config.AwsProvisioner,
                     //                fingerprint:String,
                     pkfile:String,
                     command: String,
@@ -122,9 +122,9 @@ object ExecUtil {
         log.info(s"connection, try ${iTries} of ${numTries}")
       }
       // TODO: make ExecUtil not depend on ImplAws
-      AwsProvisioner.tryFindNode(provider, tag) match {
+      AwsProvisioner.tryFindNode(provisioner, tag) match {
         case Some((node,addr)) =>
-          val value = execViaSsh(addr, provider.os.username, pkfile, sConnectTimeout, command)
+          val value = execViaSsh(addr, provisioner.os.username, pkfile, sConnectTimeout, command)
           if(!dryRun) {
             value match {
               case scala.util.Success(value) =>

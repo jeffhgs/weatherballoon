@@ -13,7 +13,7 @@ object AwsProvisioner {
   import scala.collection.JavaConverters._
 
   def provisionViaAws(
-                       provider: config.AwsProvider,
+                       provisioner: config.AwsProvisioner,
                        tag: String
                      ) = {
     val runInstancesRequest = new RunInstancesRequest();
@@ -24,14 +24,14 @@ object AwsProvisioner {
     val encodedString = encoder.encodeToString(normalString.getBytes(StandardCharsets.UTF_8))
 
     runInstancesRequest
-      .withImageId(provider.os.ami)
+      .withImageId(provisioner.os.ami)
       .withInstanceType(InstanceType.T2Medium)
       .withMinCount(1)
       .withMaxCount(1)
-      .withKeyName(provider.keyPair)
-      .withSecurityGroups(provider.group1)
+      .withKeyName(provisioner.keyPair)
+      .withSecurityGroups(provisioner.group1)
       .withUserData(encodedString)
-      .withInstanceType(provider.instanceType)
+      .withInstanceType(provisioner.instanceType)
       .withTagSpecifications(
         new TagSpecification()
           .withResourceType(ResourceType.Instance)
@@ -40,14 +40,14 @@ object AwsProvisioner {
       .withInstanceInitiatedShutdownBehavior(ShutdownBehavior.Terminate)
       .withIamInstanceProfile(
         new IamInstanceProfileSpecification().withArn(
-          provider.roleOfInstance
+          provisioner.roleOfInstance
         ))
       .withRequestCredentialsProvider(
         new AWSStaticCredentialsProvider(new BasicAWSCredentials(
-          provider.cred.id,
-          provider.cred.secret
+          provisioner.cred.id,
+          provisioner.cred.secret
         )))
-    val amazonEC2Client = AmazonEC2Client.builder().withRegion(provider.region).build()
+    val amazonEC2Client = AmazonEC2Client.builder().withRegion(provisioner.region).build()
     val result = amazonEC2Client.runInstances(
       runInstancesRequest)
     result.getReservation()
@@ -58,16 +58,16 @@ object AwsProvisioner {
                            status:String,
                            tags:Seq[Tag])
 
-  def listNodesViaAws( provider: config.AwsProvider
+  def listNodesViaAws( provisioner: config.AwsProvisioner
                      ) : Seq[NodeMetadata] =
   {
     val req = new DescribeInstancesRequest()
     val amazonEC2Client = AmazonEC2Client.builder()
-      .withRegion(provider.region)
+      .withRegion(provisioner.region)
       .withCredentials(
         new AWSStaticCredentialsProvider(new BasicAWSCredentials(
-          provider.cred.id,
-          provider.cred.secret
+          provisioner.cred.id,
+          provisioner.cred.secret
         )))
       .build()
     val result = amazonEC2Client.describeInstances(req)
@@ -80,11 +80,11 @@ object AwsProvisioner {
       yield(NodeMetadata(addrs, status, tags))
   }
 
-  def tryFindNode(provider:config.AwsProvider,
-                   tag:String
+  def tryFindNode(provisioner:config.AwsProvisioner,
+                  tag:String
                  ) : Option[(NodeMetadata,String)] =
   {
-    val nodesRemoter1 = listNodesViaAws(provider).filter(node =>
+    val nodesRemoter1 = listNodesViaAws(provisioner).filter(node =>
       (node.tags.exists(t => t.getKey.equals(tag)) &&
         (node.status == "running" || node.status == "pending"))
     )
@@ -104,12 +104,12 @@ object AwsProvisioner {
     val idrun = System.currentTimeMillis()
     val cmd1 = cmd0.mkString(" ")
     val cmd2 =
-      s"/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh ${cfg.provider.nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:${cfg.sync.dirStorage}/srchome ${cfg.sync.adirServer}" +
+      s"/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh ${cfg.provisioner.nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:${cfg.sync.dirStorage}/srchome ${cfg.sync.adirServer}" +
         s" && rm -rf ${cfg.sync.adirServer}/log" +
         s" && mkdir -p ${cfg.sync.adirServer}/log" +
         s" && cd ${cfg.sync.adirServer} " +
         s" && (${cmd1} 2>&1 | tee -a ${cfg.sync.adirServer}/log/build.log )" +
-        s" ; /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh ${cfg.provider.nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirServer}/log mys3:${cfg.sync.dirStorage}/log/${idrun} "
+        s" ; /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh ${cfg.provisioner.nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirServer}/log mys3:${cfg.sync.dirStorage}/log/${idrun} "
     val pkfile = cfg.kpFile()
 
     val numTries = 50
@@ -120,16 +120,16 @@ object AwsProvisioner {
       SyncUtil.rcloneUp(cfg)
 
       var nodeaddr : Option[(NodeMetadata,String)] = None
-      tryFindNode(cfg.provider, cfg.tag) match {
+      tryFindNode(cfg.provisioner, cfg.tag) match {
         case Some((node, addr)) =>
           nodeaddr = Some((node, addr))
         // do nothing
         case None =>
           // presume we should make a node
           log.info("looks like we should make a node")
-          provisionViaAws(cfg.provider, cfg.tag)
+          provisionViaAws(cfg.provisioner, cfg.tag)
           Thread.sleep(10000)
-          tryFindNode(cfg.provider, cfg.tag) match {
+          tryFindNode(cfg.provisioner, cfg.tag) match {
             case Some((node, addr)) =>
               // now there will eventually be a node
               nodeaddr = Some((node, addr))
@@ -137,8 +137,8 @@ object AwsProvisioner {
               throw new RuntimeException("looks like we didn't succeed in making a node")
           }
       }
-      ExecUtil.execAndRetry(cfg.provider, pkfile, "wc -c /var/log/userdata-done", cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
-      ExecUtil.execAndRetry(cfg.provider, pkfile, cmd2, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
+      ExecUtil.execAndRetry(cfg.provisioner, pkfile, "wc -c /var/log/userdata-done", cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
+      ExecUtil.execAndRetry(cfg.provisioner, pkfile, cmd2, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
     } catch {
       case ex:Throwable =>
         val sw = new StringWriter()

@@ -1,5 +1,5 @@
 {
-  "provider":{
+  "provisioner":{
     "kind": "aws",
     "region": "us-west-2",
     "group1": "sg_temp1",

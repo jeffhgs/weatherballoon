@@ -13,7 +13,7 @@ object config {
                        val username: String
                      )
 
-  case class AwsProvider(
+  case class AwsProvisioner(
                           val kind: String = "aws",
                           val region: String,
                           val group1: String,
@@ -37,13 +37,13 @@ object config {
                  )
 
   case class Remoter(
-                      val provider: AwsProvider,
+                      val provisioner: AwsProvisioner,
                       val tag: String,
                       val sync:Sync
                           )
   {
     def kpFile() = {
-      new File(new File(System.getenv("HOME"), ".ssh"), provider.keyPair).toString()
+      new File(new File(System.getenv("HOME"), ".ssh"), provisioner.keyPair).toString()
     }
   }
 
