@@ -19,7 +19,6 @@ apply plugin: 'scala'
 apply plugin:'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 
-
 dependencies {
     compile 'org.scala-lang:scala-library:2.11.8'
     zinc 'com.typesafe.zinc:zinc:0.3.9'
@@ -45,6 +44,15 @@ task(run2, type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 }
 
+task(runJce, type: JavaExec) {
+    main = 'com.groovescale.RunJce'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task copyDependencies(type: Copy) {
+    from configurations.compile
+    into "$project.rootDir/reports/libs/"
+}
 
 shadowJar {
     mainClassName = 'com.groovescale.Run1'
@@ -52,3 +60,4 @@ shadowJar {
     classifier = null
     version = null
 }
+shadowJar.dependsOn 'copyDependencies'
