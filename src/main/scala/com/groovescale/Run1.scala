@@ -166,12 +166,12 @@ object Run1 {
                    ) =
   {
     val nodes = listNodesViaAws(cfg.group1, cfg.region, cfg.cred)
-    println(s">> No of nodes ${nodes.size}")
+    log.info(s">> No of nodes ${nodes.size}")
     import scala.collection.JavaConversions._
     for (node <- nodes) {
-      println(">>>>  " + node)
+      log.info(">>>>  " + node)
       if(node.tags.contains(cfg.tag)) {
-        println("woot!")
+        log.info("woot!")
       }
     }
   }
@@ -180,7 +180,7 @@ object Run1 {
                    ) =
   {
     val node = tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred)
-    println(">>>>  " + node)
+    log.info(">>>>  " + node)
   }
 
   def testSsh(cfg:config.Remoter) = {
@@ -192,11 +192,11 @@ object Run1 {
     value match {
       case scala.util.Success(value) =>
         // TODO: for logging, limit stdout and stderr to a maximum number of characters
-        println(s"status=${value.exitCode}\n\tcommand=\n\t${cmd}\n\tstdout=\n\t${value.stdOutAsString()}\n\tstderr=${value.stdErrAsString()}")
+        log.info(s"status=${value.exitCode}\n\tcommand=\n\t${cmd}\n\tstdout=\n\t${value.stdOutAsString()}\n\tstderr=${value.stdErrAsString()}")
       case scala.util.Failure(ex) =>
         log.warn(ex.toString)
     }
-    println("sleeping")
+    log.info("sleeping")
     Thread.sleep(10000)
   }
 
@@ -243,7 +243,7 @@ object Run1 {
       cTriesLeft -= 1
       val iTries = numTries - cTriesLeft
       if(dryRun) {
-        println(s"connection, try ${iTries} of ${numTries}")
+        log.info(s"connection, try ${iTries} of ${numTries}")
       }
       tryFindNode(group1, region, tag, cred) match {
         case Some((node,addr)) =>
@@ -251,7 +251,7 @@ object Run1 {
           if(!dryRun) {
             value match {
               case scala.util.Success(value) =>
-                println(s"status=${value.exitCode}\n\tcommand=\n\t${command}\n\tstdout=\n\t${value.stdOutAsString()}\n\tstderr=${value.stdErrAsString()}")
+                log.info(s"status=${value.exitCode}\n\tcommand=\n\t${command}\n\tstdout=\n\t${value.stdOutAsString()}\n\tstderr=${value.stdErrAsString()}")
               case scala.util.Failure(ex) =>
                 log.warn(ex.toString)
             }
@@ -277,7 +277,7 @@ object Run1 {
     if(!dirFrom.isDirectory)
       throw new RuntimeException(s"fileExcludes=${cfg.sync.adirFrom} is not a directory")
     val cmd = cmdRsync(ipaddr,cfg)
-    println(s"about to ${cmd}")
+    log.info(s"about to ${cmd}")
     cmd.!
   }
 
@@ -332,7 +332,7 @@ object Run1 {
         // do nothing
         case None =>
           // presume we should make a node
-          println("looks like we should make a node")
+          log.info("looks like we should make a node")
           provisionViaAws(cfg.region, cfg.group1, cfg.keyPair, cfg.os.stUser, cfg.os.ami, cfg.tag, cfg.cred)
           Thread.sleep(10000)
           tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred) match {
@@ -344,7 +344,7 @@ object Run1 {
           }
       }
       execAndRetry(cfg.os.username, pkfile, "echo hello", cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
-      println("about to sync")
+      log.info("about to sync")
       //rsync(nodeaddr.get._2, cfg)
       execAndRetry(cfg.os.username, pkfile, cmd2, cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
     } catch {
@@ -354,7 +354,7 @@ object Run1 {
         //ex.fillInStackTrace().printStackTrace(buf)
         ex.printStackTrace(buf)
         buf.close()
-        println(sw.getBuffer.toString)
+        log.info(sw.getBuffer.toString)
         System.exit(1)
     }
     System.exit(0)
@@ -385,7 +385,7 @@ object Run1 {
       case ex:Throwable =>
         throw new RuntimeException("could not parse credentials: ",ex)
     }
-    println(s"cfg=${cfg}")
+    log.info(s"cfg=${cfg}")
     if(cred==null) {
       log.error("no credentials found")
       throw new RuntimeException("no credentials found")

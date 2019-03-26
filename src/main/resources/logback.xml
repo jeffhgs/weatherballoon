@@ -4,7 +4,9 @@
             <pattern>%-5level %logger{36} %line:  %msg%n</pattern>
         </encoder>
     </appender>
-    <root level="warn">
+    <logger name="net.schmizz.sshj" level="WARN" />
+    <logger name="com.decodified.scalassh" level="WARN" />
+    <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
 </configuration>
