@@ -81,7 +81,7 @@ object Run1 {
                            status:String,
                            tags:Seq[String])
 
-  def listNodesViaJclouds(
+  def listNodesViaAws(
                            group1 : String,
                            cred : config.Aws
                          ) : Seq[NodeMetadata] =
@@ -169,7 +169,7 @@ object Run1 {
                      cfg:config.Remoter
                    ) =
   {
-    val nodes = listNodesViaJclouds(cfg.group1, cfg.cred)
+    val nodes = listNodesViaAws(cfg.group1, cfg.cred)
     println(s">> No of nodes ${nodes.size}")
     import scala.collection.JavaConversions._
     for (node <- nodes) {
@@ -203,7 +203,7 @@ object Run1 {
                  cred:config.Aws
                  ) : Option[(NodeMetadata,String)] =
   {
-    val nodesRemoter1 = listNodesViaJclouds(group1, cred).filter(node =>
+    val nodesRemoter1 = listNodesViaAws(group1, cred).filter(node =>
       (node.tags.contains(tag) &&
         (node.status == "RUNNING" || node.status == "PENDING"))
     )
