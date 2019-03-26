@@ -367,7 +367,7 @@ object Run1 {
       s" && cd ${cfg.sync.adirServer} " +
       s" && (${cmd1} 2>&1 | tee -a ${cfg.sync.adirServer}/log/build.log )" +
       s" && /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh ${cfg.roleOfInstance.name} /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirServer}/log mys3:${cfg.sync.dirStorage}/log/${idrun} "
-    val pkfile = new File(System.getenv("HOME"), ".ssh/id_gs_temp_2019-01").toString()
+    val pkfile = new File(System.getenv("HOME"), s".ssh/${cfg.keyPair}").toString()
 
     val numTries = 50
     val msBetweenPolls = 5000
