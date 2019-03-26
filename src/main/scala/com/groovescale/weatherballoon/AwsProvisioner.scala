@@ -100,6 +100,50 @@ object AwsProvisioner {
       None
   }
 
+  private def execAndRetry(
+                    provisioner: config.AwsProvisioner,
+                    //                fingerprint:String,
+                    pkfile:String,
+                    command: String,
+                    tag:String,
+                    msBetweenPolls:Int,
+                    sConnectTimeout:Int,
+                    numTries: Int,
+                    dryRun: Boolean
+                  ) =
+  {
+    var cTriesLeft = numTries
+    var done = false
+    while (cTriesLeft >= 1 && !done) {
+      cTriesLeft -= 1
+      val iTries = numTries - cTriesLeft
+      if(dryRun) {
+        log.info(s"connection, try ${iTries} of ${numTries}")
+      }
+      AwsProvisioner.tryFindNode(provisioner, tag) match {
+        case Some((node,addr)) =>
+          val value = ExecUtil.execViaSsh(addr, provisioner.os.username, pkfile, sConnectTimeout, command)
+          if(!dryRun) {
+            value match {
+              case scala.util.Success(value) =>
+                log.info(s"status=${value}\n\tcommand=\n\t${command}")
+              case scala.util.Failure(ex) =>
+                log.warn(ex.toString)
+            }
+          }
+          if (dryRun && value.isSuccess && value.get == 0) {
+            done = true
+          } else if (!dryRun && value.isSuccess) {
+            done = true
+          } else {
+            Thread.sleep(msBetweenPolls)
+          }
+        case None =>
+          Thread.sleep(msBetweenPolls)
+      }
+    }
+  }
+
   def runProvisioned(cmd0:Array[String], cfg:config.Remoter) = {
     val idrun = System.currentTimeMillis()
     val cmd1 = cmd0.mkString(" ")
@@ -137,8 +181,8 @@ object AwsProvisioner {
               throw new RuntimeException("looks like we didn't succeed in making a node")
           }
       }
-      ExecUtil.execAndRetry(cfg.provisioner, pkfile, "wc -c /var/log/userdata-done", cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
-      ExecUtil.execAndRetry(cfg.provisioner, pkfile, cmd2, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
+      execAndRetry(cfg.provisioner, pkfile, "wc -c /var/log/userdata-done", cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
+      execAndRetry(cfg.provisioner, pkfile, cmd2, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
     } catch {
       case ex:Throwable =>
         val sw = new StringWriter()
