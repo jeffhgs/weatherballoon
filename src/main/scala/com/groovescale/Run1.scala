@@ -189,11 +189,17 @@ object Run1 {
     //log.info("getting stdin stream")
     //chan.setInputStream(null)
     val is = chan.getInputStream
+
+    val out = new PipedOutputStream()
+    val pout = new PipedInputStream(out)
+    chan.setOutputStream(out)
+
     log.info("about to connect")
     chan.connect(10000)
     log.info("about to pump")
     //pump(chan, is)
     while(!chan.isClosed) {
+      pumpOnce(pout, System.out)
       log.info("sleeping")
       Thread.sleep(1000)
     }
