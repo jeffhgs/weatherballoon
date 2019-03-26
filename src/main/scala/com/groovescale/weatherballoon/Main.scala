@@ -11,14 +11,14 @@ import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
 
-object Run1 {
-  val log = LoggerFactory.getLogger(Run1.getClass())
+object Main {
+  val log = LoggerFactory.getLogger(Main.getClass())
 
   import scala.collection.JavaConverters._
 
   def main(args: Array[String]): Unit = {
     val cmd = args
     val cfg = ConfigUtil.getCfg()
-    ImplAws.testProvisionRun(cmd, cfg)
+    AwsProvisioner.runProvisioned(cmd, cfg)
   }
 }

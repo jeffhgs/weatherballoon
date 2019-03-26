@@ -25,7 +25,7 @@ class TestAws extends JUnitSuite {
   }
 
   def testProvision(cfg:config.Remoter) = {
-    ImplAws.provisionViaAws(
+    AwsProvisioner.provisionViaAws(
       cfg.region,
       cfg.group1,
       cfg.keyPair,
@@ -41,7 +41,7 @@ class TestAws extends JUnitSuite {
                      cfg:config.Remoter
                    ) =
   {
-    val nodes = ImplAws.listNodesViaAws(cfg.group1, cfg.region, cfg.cred)
+    val nodes = AwsProvisioner.listNodesViaAws(cfg.group1, cfg.region, cfg.cred)
     log.info(s">> No of nodes ${nodes.size}")
     for (node <- nodes) {
       log.info(">>>>  " + node)
@@ -54,7 +54,7 @@ class TestAws extends JUnitSuite {
                     cfg:config.Remoter
                   ) =
   {
-    val node = ImplAws.tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred)
+    val node = AwsProvisioner.tryFindNode(cfg.group1, cfg.region, cfg.tag, cfg.cred)
     log.info(">>>>  " + node)
   }
 
@@ -63,7 +63,7 @@ class TestAws extends JUnitSuite {
     val hostname = "ec2-54-186-244-37.us-west-2.compute.amazonaws.com"
     val sConnectTimeout = 10
     val cmd = "echo hello"
-    val value = SshUtil.execViaSsh(hostname, cfg.os.username, cfg.kpFile(), sConnectTimeout, cmd)
+    val value = ExecUtil.execViaSsh(hostname, cfg.os.username, cfg.kpFile(), sConnectTimeout, cmd)
     value match {
       case scala.util.Success(value) =>
         // TODO: for logging, limit stdout and stderr to a maximum number of characters

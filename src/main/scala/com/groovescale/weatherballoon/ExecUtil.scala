@@ -3,15 +3,15 @@ package com.groovescale.weatherballoon
 import java.io.{InputStream, OutputStream, PipedInputStream, PipedOutputStream}
 import java.util.Properties
 
-import com.groovescale.weatherballoon.ImplAws.log
-import com.groovescale.weatherballoon.Run1.log
+import com.groovescale.weatherballoon.AwsProvisioner.log
+import com.groovescale.weatherballoon.Main.log
 import com.jcraft.jsch.{ChannelExec, JSch, Session}
 import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success, Try}
 
-object SshUtil {
-  val log = LoggerFactory.getLogger(SshUtil.getClass())
+object ExecUtil {
+  val log = LoggerFactory.getLogger(ExecUtil.getClass())
 
   val tmpPumpOnce = new Array[Byte](1024)
   def pumpOnce(in:InputStream, os:OutputStream) : Unit = {
@@ -126,8 +126,8 @@ object SshUtil {
       if(dryRun) {
         log.info(s"connection, try ${iTries} of ${numTries}")
       }
-      // TODO: make SshUtil not depend on ImplAws
-      ImplAws.tryFindNode(group1, region, tag, cred) match {
+      // TODO: make ExecUtil not depend on ImplAws
+      AwsProvisioner.tryFindNode(group1, region, tag, cred) match {
         case Some((node,addr)) =>
           val value = execViaSsh(addr, username, pkfile, sConnectTimeout, command)
           if(!dryRun) {

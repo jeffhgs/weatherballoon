@@ -5,11 +5,11 @@ import java.io._
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials}
 import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model._
-import com.groovescale.weatherballoon.Run1.{getClass, log}
+import com.groovescale.weatherballoon.Main.{getClass, log}
 import org.slf4j.LoggerFactory
 
-object ImplAws {
-  val log = LoggerFactory.getLogger(ImplAws.getClass())
+object AwsProvisioner {
+  val log = LoggerFactory.getLogger(AwsProvisioner.getClass())
 
   import scala.collection.JavaConverters._
 
@@ -129,7 +129,7 @@ object ImplAws {
       None
   }
 
-  def testProvisionRun(cmd0:Array[String], cfg:config.Remoter) = {
+  def runProvisioned(cmd0:Array[String], cfg:config.Remoter) = {
     val idrun = System.currentTimeMillis()
     val cmd1 = cmd0.mkString(" ")
     val cmd2 =
@@ -166,8 +166,8 @@ object ImplAws {
               throw new RuntimeException("looks like we didn't succeed in making a node")
           }
       }
-      SshUtil.execAndRetry(cfg.os.username, pkfile, "wc -c /var/log/userdata-done", cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
-      SshUtil.execAndRetry(cfg.os.username, pkfile, cmd2, cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
+      ExecUtil.execAndRetry(cfg.os.username, pkfile, "wc -c /var/log/userdata-done", cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
+      ExecUtil.execAndRetry(cfg.os.username, pkfile, cmd2, cfg.group1, cfg.region, cfg.cred, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
     } catch {
       case ex:Throwable =>
         val sw = new StringWriter()
