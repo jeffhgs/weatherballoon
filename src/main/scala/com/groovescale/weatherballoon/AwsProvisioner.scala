@@ -32,6 +32,12 @@ object AwsProvisioner {
       .withSecurityGroups(provisioner.group1)
       .withUserData(encodedString)
       .withInstanceType(provisioner.instanceType)
+      .withBlockDeviceMappings(new BlockDeviceMapping()
+        .withDeviceName("/dev/sda1")
+        .withEbs(
+          new EbsBlockDevice()
+            .withVolumeType("gp2")
+            .withVolumeSize(provisioner.gbsizeOfMainDisk)))
       .withTagSpecifications(
         new TagSpecification()
           .withResourceType(ResourceType.Instance)
@@ -152,7 +158,7 @@ object AwsProvisioner {
         s" && rm -rf ${cfg.sync.adirServer}/log" +
         s" && mkdir -p ${cfg.sync.adirServer}/log" +
         s" && cd ${cfg.sync.adirServer} " +
-        s" && (${cmd1} 2>&1 | tee -a ${cfg.sync.adirServer}/log/build.log )" +
+        s" && (/usr/local/bin/with_heartbeat.sh 1m ${cmd1} 2>&1 | tee -a ${cfg.sync.adirServer}/log/build.log )" +
         s" ; /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh ${cfg.provisioner.nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirServer}/log mys3:${cfg.sync.dirStorage}/log/${idrun} "
     val pkfile = cfg.kpFile()
 

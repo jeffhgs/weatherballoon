@@ -21,6 +21,7 @@ object config {
                           val roleOfInstance: String,
                           val keyPair: String,
                           val instanceType: String,
+                          val gbsizeOfMainDisk: Int,
                           val os: config.AwsOs
                         )
   {

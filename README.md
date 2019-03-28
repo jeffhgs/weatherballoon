@@ -104,6 +104,7 @@ An example <code>.weatherballoon.json</code> file is located in doc/sample_.weat
         },
         "instanceType": "t2.medium",
         "cred": null,
+        "gbsizeOfMainDisk": 40,
         "roleOfInstance":
           "arn:aws:iam::............:instance-profile/weatherballoon-ec2-accesses-s3all"
       },
