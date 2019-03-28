@@ -17,7 +17,7 @@ object SyncUtil {
       "RCLONE_CONFIG_MYS3_TYPE=s3",
       "rclone",
       "--config", "/dev/null",
-      "--s3-env-auth", "--s3-region", "us-west-2",
+      "--s3-env-auth", "--s3-region", cfg.provisioner.region,
       "--exclude", ".git/", "--exclude", ".idea/", "--exclude", "build/", "--exclude", "out/", "--exclude", ".gradle/",
       "--progress",
       "sync", cfg.sync.adirLocal, s"mys3:${cfg.sync.dirStorage}/srchome"
