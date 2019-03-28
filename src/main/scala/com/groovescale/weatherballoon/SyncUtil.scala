@@ -11,17 +11,21 @@ object SyncUtil {
 
   def rcloneUp(cfg:config.Remoter) : Try[Int] = {
     import scala.sys.process._
-    val cmd = Seq(
+    val cmdRclone = Seq(
       "env", s"AWS_ACCESS_KEY_ID=${cfg.provisioner.cred.id}",
       s"AWS_SECRET_ACCESS_KEY=${cfg.provisioner.cred.secret}",
       "RCLONE_CONFIG_MYS3_TYPE=s3",
       "rclone",
       "--config", "/dev/null",
-      "--s3-env-auth", "--s3-region", cfg.provisioner.region,
-      "--exclude", ".git/", "--exclude", ".idea/", "--exclude", "build/", "--exclude", "out/", "--exclude", ".gradle/",
+      "--s3-env-auth", "--s3-region", cfg.provisioner.region)
+    val cmdExclude = Seq(
+      "--exclude", ".git/", "--exclude", ".idea/", "--exclude", "build/", "--exclude", "out/", "--exclude", ".gradle/"
+    )
+    val cmdSync = Seq(
       "--progress",
       "sync", cfg.sync.adirLocal, s"mys3:${cfg.sync.dirStorage}/srchome"
     )
+    val cmd = cmdRclone ++ cmdExclude ++ cmdSync
     val status = cmd.!
     if(status==0) Success(0) else Failure(new RuntimeException(s"status=${status}"))
   }
