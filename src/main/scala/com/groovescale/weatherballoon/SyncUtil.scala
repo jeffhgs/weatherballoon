@@ -19,6 +19,7 @@ object SyncUtil {
       "--config", "/dev/null",
       "--s3-env-auth", "--s3-region", "us-west-2",
       "--exclude", ".git/", "--exclude", ".idea/", "--exclude", "build/", "--exclude", "out/", "--exclude", ".gradle/",
+      "--progress",
       "sync", cfg.sync.adirLocal, s"mys3:${cfg.sync.dirStorage}/srchome"
     )
     val status = cmd.!
