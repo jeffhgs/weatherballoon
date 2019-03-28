@@ -112,7 +112,9 @@ An example <code>.weatherballoon.json</code> file is located in doc/sample_.weat
       "minutesMaxRun": 120,
       "sync": {
         "adirLocal": null,
-        "fileExcludes": null,
+        "dirsToExclude": [
+          ".git/",  ".idea/",  "build/",  "out/",  ".gradle/"
+        ],
         "adirServer": "/home/ubuntu/srchome",
         "dirStorage": "weatherballoon-test1"
       }

@@ -34,7 +34,7 @@ object config {
                  adirLocal:String,
                  adirServer:String,
                  dirStorage:String,
-                 fileExcludes:String
+                 dirsToExclude:Seq[String]
                  )
 
   case class Remoter(
