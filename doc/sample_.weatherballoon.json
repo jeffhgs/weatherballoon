@@ -15,6 +15,7 @@
       "arn:aws:iam::............:instance-profile/weatherballoon-ec2-accesses-s3all"
   },
   "tag": "Remoter",
+  "minutesMaxRun": 120,
   "sync": {
     "adirLocal": null,
     "fileExcludes": null,

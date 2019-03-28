@@ -109,6 +109,7 @@ An example <code>.weatherballoon.json</code> file is located in doc/sample_.weat
           "arn:aws:iam::............:instance-profile/weatherballoon-ec2-accesses-s3all"
       },
       "tag": "Remoter",
+      "minutesMaxRun": 120,
       "sync": {
         "adirLocal": null,
         "fileExcludes": null,

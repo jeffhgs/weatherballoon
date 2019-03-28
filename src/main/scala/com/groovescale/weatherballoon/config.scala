@@ -40,6 +40,7 @@ object config {
   case class Remoter(
                       val provisioner: AwsProvisioner,
                       val tag: String,
+                      val minutesMaxRun: Int,
                       val sync:Sync
                           )
   {
