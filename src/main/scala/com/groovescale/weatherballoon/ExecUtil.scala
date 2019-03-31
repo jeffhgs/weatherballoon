@@ -29,6 +29,17 @@ object ExecUtil {
     }
   }
 
+  private def sshsessionCreate(hostname: String, username: String, pkfile: String) = {
+    val props = new Properties()
+    props.put("StrictHostKeyChecking", "no")
+    val jsch = new JSch();
+    //JSch.setLogger(new JSCHLogger());
+    jsch.addIdentity(pkfile)
+    val session = jsch.getSession(username, hostname, 22)
+    session.setConfig(props)
+    session
+  }
+
   def execViaSshImpl(
                       hostname:String,
                       username:String,
@@ -39,13 +50,7 @@ object ExecUtil {
                     ) : Try[Int] =
   {
     try {
-      val props = new Properties()
-      props.put("StrictHostKeyChecking", "no")
-      val jsch = new JSch();
-      //JSch.setLogger(new JSCHLogger());
-      jsch.addIdentity(pkfile)
-      val session = jsch.getSession(username, hostname, 22)
-      session.setConfig(props)
+      val session: Session = sshsessionCreate(hostname, username, pkfile)
       session.connect(30000) // making a connection with timeout.
       return execViaSshImplJsch2(session, command)
     } catch {
