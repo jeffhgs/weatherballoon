@@ -154,12 +154,8 @@ object AwsProvisioner {
     val idrun = System.currentTimeMillis()
     val cmd1 = cmd0.mkString(" ")
     val cmd2 =
-      s"/usr/local/bin/with_heartbeat.sh ${cfg.minutesMaxRun}m bash /usr/local/bin/with_instance_role.sh ${cfg.provisioner.nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:${cfg.sync.dirStorage}/srchome ${cfg.sync.adirServer}" +
-        s" && rm -rf ${cfg.sync.adirServer}/log" +
-        s" && mkdir -p ${cfg.sync.adirServer}/log" +
-        s" && cd ${cfg.sync.adirServer} " +
-        s" && (/usr/local/bin/with_heartbeat.sh ${cfg.minutesMaxRun}m ${cmd1} 2>&1 | tee -a ${cfg.sync.adirServer}/log/build.log )" +
-        s" ; /usr/local/bin/with_heartbeat.sh ${cfg.minutesMaxRun}m bash /usr/local/bin/with_instance_role.sh ${cfg.provisioner.nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirServer}/log mys3:${cfg.sync.dirStorage}/log/${idrun} "
+      s"/usr/local/bin/with_sync_updown.sh ${cfg.minutesMaxRun} ${cfg.provisioner.nameOfRole} ${cfg.sync.dirStorage} ${cfg.sync.adirServer} ${idrun} " +
+      s"/usr/local/bin/with_logging.sh ${cfg.sync.adirServer}/log/build.log ${cmd1}"
     val pkfile = cfg.kpFile()
 
     val numTries = 50
