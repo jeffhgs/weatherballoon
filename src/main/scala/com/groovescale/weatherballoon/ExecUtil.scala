@@ -11,47 +11,37 @@ import scala.util.{Failure, Success, Try}
 object ExecUtil {
   val log = LoggerFactory.getLogger(ExecUtil.getClass())
 
+  class TooManyRetriesException(msg:String) extends RuntimeException(msg) {}
+
   def execViaSsh(
                   hostname:String,
                   username:String,
                   pkfile:String,
                   //                fingerprint:String,
                   sConnectTimeout : Int,
+                  spooler:String,
                   command:String
                 ) : Try[Int] =
   {
-    val res = execViaSshImpl(hostname, username, pkfile, sConnectTimeout, "touch /tmp/heartbeat")
-    res match {
-      case Success(0) =>
-        return execViaSshImpl(hostname, username, pkfile, sConnectTimeout, command)
-      case _ =>
-        return res
+    try {
+      val session: Session = sshsessionCreate(hostname, username, pkfile)
+      session.connect(30000) // making a connection with timeout.
+      return execViaSshImplJsch2(session, spooler, command)
+    } catch {
+      case ex: Throwable =>
+        return Failure(ex)
     }
   }
 
-  def execViaSshImpl(
-                      hostname:String,
-                      username:String,
-                      pkfile:String,
-                      //                fingerprint:String,
-                      sConnectTimeout : Int,
-                      command:String
-                    ) : Try[Int] =
-  {
-    try {
-      val props = new Properties()
-      props.put("StrictHostKeyChecking", "no")
-      val jsch = new JSch();
-      //JSch.setLogger(new JSCHLogger());
-      jsch.addIdentity(pkfile)
-      val session = jsch.getSession(username, hostname, 22)
-      session.setConfig(props)
-      session.connect(30000) // making a connection with timeout.
-      return execViaSshImplJsch2(session, command)
-    } catch {
-      case ex:Throwable =>
-        return Failure(ex)
-    }
+  private def sshsessionCreate(hostname: String, username: String, pkfile: String) = {
+    val props = new Properties()
+    props.put("StrictHostKeyChecking", "no")
+    val jsch = new JSch();
+    //JSch.setLogger(new JSCHLogger());
+    jsch.addIdentity(pkfile)
+    val session = jsch.getSession(username, hostname, 22)
+    session.setConfig(props)
+    session
   }
 
   def pumpOnce(in:InputStream, os:OutputStream, tmpPumpOnce:Array[Byte]) : Unit = {
@@ -66,13 +56,27 @@ object ExecUtil {
     }
   }
 
-  def execViaSshImplJsch2(session:Session, command:String) : Try[Int] = {
-    val tmpPumpOnce = new Array[Byte](1024)
-    //log.info("connected via jsch")
+  def execViaSshImplJsch2(session:Session, spooler:String, command:String) : Try[Int] = {
+    val bufStdout = new Array[Byte](1024)
+    val bufStderr = new Array[Byte](1024)
     val chan = session.openChannel("exec")
     // If we don't allocate a pty, sshd will not know to kill our process if we ctrl+C weatherballoon
-    chan.asInstanceOf[ChannelExec].setPty(true)
-    //log.info(s"setting command: ${command}")
+    chan.asInstanceOf[ChannelExec].setPty(!(spooler == "tmux"))
+
+    // TODO: By specification we cannot retry our command.  However, we could greatly improve
+    // our chances of a successful command attempt as follows:
+    //   1) Connect with a piped stdin
+    //   2) Once connected, verify our ssh connection by running a placebo command
+    //   3) Drop the connection and fail if the placebo command doesn't work
+    //   4) Proceed to attempt our command.
+    // This way, we would only fail to attempt the command in the very unlikely case that
+    // we dropped our socket right between verifying the ssh connection and the command.
+    //
+    // What we currently do is basically the same, but we use two entirely different ssh
+    // connections.
+    //
+    // A downside of this approach would be to make it difficult to use stdin piping
+    // for some other reason.
     chan.asInstanceOf[ChannelExec].setCommand(command)
     val is = chan.getInputStream
 
@@ -80,24 +84,25 @@ object ExecUtil {
     val pout = new PipedInputStream(out)
     chan.setOutputStream(out)
 
-    //log.info("about to connect")
+    val err = new PipedOutputStream()
+    val perr = new PipedInputStream(err)
+    chan.setExtOutputStream(err)
+
     chan.connect(10000)
-    //log.info("about to pump")
     while(!chan.isClosed) {
-      pumpOnce(pout, System.out, tmpPumpOnce)
-      //log.info("sleeping")
+      pumpOnce(pout, System.out, bufStdout)
+      pumpOnce(perr, System.out, bufStderr)
       Thread.sleep(1000)
     }
+    pumpOnce(pout, System.out, bufStdout)
+    pumpOnce(perr, System.out, bufStderr)
     System.out.flush()
-    //log.info("about to disconnect channel")
     if(chan.isConnected) {
       chan.disconnect()
     }
-    //log.info("about to disconnect session")
     if(session.isConnected) {
       session.disconnect()
     }
-    //log.info(s"status ${chan.getExitStatus}")
     return Success(chan.getExitStatus)
   }
 

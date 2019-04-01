@@ -1,3 +1,6 @@
+# TODO: better fix for userdata-done baked into the AMI
+rm -f "/var/log/userdata-done"
+
 apt-get update
 apt-get install -y \
     ec2-api-tools \

@@ -7,6 +7,8 @@ import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model._
 import org.slf4j.LoggerFactory
 
+import scala.util.{Success, Try}
+
 object AwsProvisioner {
   val log = LoggerFactory.getLogger(AwsProvisioner.getClass())
 
@@ -32,6 +34,12 @@ object AwsProvisioner {
       .withSecurityGroups(provisioner.group1)
       .withUserData(encodedString)
       .withInstanceType(provisioner.instanceType)
+      .withBlockDeviceMappings(new BlockDeviceMapping()
+        .withDeviceName("/dev/sda1")
+        .withEbs(
+          new EbsBlockDevice()
+            .withVolumeType("gp2")
+            .withVolumeSize(provisioner.gbsizeOfMainDisk)))
       .withTagSpecifications(
         new TagSpecification()
           .withResourceType(ResourceType.Instance)
@@ -100,6 +108,40 @@ object AwsProvisioner {
       None
   }
 
+  private def waitForProvisioning(
+                                   provisioner: config.AwsProvisioner,
+                                   //                fingerprint:String,
+                                   pkfile:String,
+                                   command: String,
+                                   tag:String,
+                                   msBetweenPolls:Int,
+                                   sConnectTimeout:Int,
+                                   numTries: Int
+                                 ) : Try[Int] =
+  {
+    var cTriesLeft = numTries
+    var done = false
+    while (cTriesLeft >= 1 && !done) {
+      cTriesLeft -= 1
+      val iTries = numTries - cTriesLeft
+      log.info(s"connection, try ${iTries} of ${numTries}")
+      AwsProvisioner.tryFindNode(provisioner, tag) match {
+        case Some((node,addr)) =>
+          val spooler = ""
+          val value = ExecUtil.execViaSsh(addr, provisioner.os.username, pkfile, sConnectTimeout, spooler, command)
+          if (value.isSuccess && value.get == 0) {
+            log.info(s"successfully provisioned node ${node} at ${addr}")
+            return value
+          } else {
+            Thread.sleep(msBetweenPolls)
+          }
+        case None =>
+          Thread.sleep(msBetweenPolls)
+      }
+    }
+    throw new ExecUtil.TooManyRetriesException(s"waitForProvisioning: command=${command}")
+  }
+
   private def execAndRetry(
                     provisioner: config.AwsProvisioner,
                     //                fingerprint:String,
@@ -108,39 +150,23 @@ object AwsProvisioner {
                     tag:String,
                     msBetweenPolls:Int,
                     sConnectTimeout:Int,
-                    numTries: Int,
-                    dryRun: Boolean
-                  ) =
+                    spooler:String,
+                    numTries: Int
+                  ) : Try[Int] =
   {
-    var cTriesLeft = numTries
-    var done = false
-    while (cTriesLeft >= 1 && !done) {
-      cTriesLeft -= 1
-      val iTries = numTries - cTriesLeft
-      if(dryRun) {
-        log.info(s"connection, try ${iTries} of ${numTries}")
-      }
-      AwsProvisioner.tryFindNode(provisioner, tag) match {
-        case Some((node,addr)) =>
-          val value = ExecUtil.execViaSsh(addr, provisioner.os.username, pkfile, sConnectTimeout, command)
-          if(!dryRun) {
-            value match {
-              case scala.util.Success(value) =>
-                log.info(s"status=${value}\n\tcommand=\n\t${command}")
-              case scala.util.Failure(ex) =>
-                log.warn(ex.toString)
-            }
-          }
-          if (dryRun && value.isSuccess && value.get == 0) {
-            done = true
-          } else if (!dryRun && value.isSuccess) {
-            done = true
-          } else {
-            Thread.sleep(msBetweenPolls)
-          }
-        case None =>
-          Thread.sleep(msBetweenPolls)
-      }
+    // TODO: by specification, while we cannot retry our command, we can retry here
+    AwsProvisioner.tryFindNode(provisioner, tag) match {
+      case Some((node,addr)) =>
+        val value = ExecUtil.execViaSsh(addr, provisioner.os.username, pkfile, sConnectTimeout, spooler, command)
+        value match {
+          case scala.util.Success(value) =>
+            log.info(s"status=${value}\n\tcommand=\n\t${command}")
+          case scala.util.Failure(ex) =>
+            log.warn(ex.toString)
+        }
+        return value
+      case None =>
+        throw new RuntimeException("TODO: retries: execAndRetry")
     }
   }
 
@@ -148,12 +174,13 @@ object AwsProvisioner {
     val idrun = System.currentTimeMillis()
     val cmd1 = cmd0.mkString(" ")
     val cmd2 =
-      s"/usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh ${cfg.provisioner.nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:${cfg.sync.dirStorage}/srchome ${cfg.sync.adirServer}" +
-        s" && rm -rf ${cfg.sync.adirServer}/log" +
-        s" && mkdir -p ${cfg.sync.adirServer}/log" +
-        s" && cd ${cfg.sync.adirServer} " +
-        s" && (${cmd1} 2>&1 | tee -a ${cfg.sync.adirServer}/log/build.log )" +
-        s" ; /usr/local/bin/with_heartbeat.sh 1m bash /usr/local/bin/with_instance_role.sh ${cfg.provisioner.nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 sync ${cfg.sync.adirServer}/log mys3:${cfg.sync.dirStorage}/log/${idrun} "
+      s"/usr/local/bin/with_sync_updown.sh ${cfg.minutesMaxRun} ${cfg.provisioner.nameOfRole} ${cfg.sync.dirStorage} ${cfg.sync.adirServer} ${idrun} " +
+      s"/usr/local/bin/with_logging.sh ${cfg.sync.adirServer}/log/build.log ${cmd1}"
+    val cmd3 =
+      if(cfg.spooler == "tmux")
+        s"/usr/local/bin/spool_via_tmux.sh ${cmd2}"
+      else
+        cmd2
     val pkfile = cfg.kpFile()
 
     val numTries = 50
@@ -181,8 +208,14 @@ object AwsProvisioner {
               throw new RuntimeException("looks like we didn't succeed in making a node")
           }
       }
-      execAndRetry(cfg.provisioner, pkfile, "wc -c /var/log/userdata-done", cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
-      execAndRetry(cfg.provisioner, pkfile, cmd2, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
+      val status = waitForProvisioning(cfg.provisioner, pkfile, "grep -c done /var/log/userdata-done", cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
+      status match {
+        case Success(0) =>
+          log.info(s"about to run cmd: ${cmd3}")
+          execAndRetry(cfg.provisioner, pkfile, cmd3, cfg.tag, msBetweenPolls, sConnectTimeout, cfg.spooler, numTries)
+        case _ =>
+          log.info(s"waiting for provisioning")
+      }
     } catch {
       case ex:Throwable =>
         val sw = new StringWriter()

@@ -49,6 +49,8 @@ Weatherballoon takes any local machine command line run/test command and efficie
 - Be efficient with:
     - Incurred fees for cloud resources
     - Wall clock time
+- In the presence of transient errors (networking, provisioning), never run a job more than once, but otherwise retry to ensure very high chance of a successful job attempt.
+- Interpret a job deciding to fail as a successful attempt
 
 # Installation
 
@@ -104,10 +106,13 @@ An example <code>.weatherballoon.json</code> file is located in doc/sample_.weat
         },
         "instanceType": "t2.medium",
         "cred": null,
+        "gbsizeOfMainDisk": 40,
         "roleOfInstance":
           "arn:aws:iam::............:instance-profile/weatherballoon-ec2-accesses-s3all"
       },
       "tag": "Remoter",
+      "minutesMaxRun": 120,
+      "spooler": "tmux",
       "sync": {
         "adirLocal": null,
         "fileExcludes": null,
@@ -233,6 +238,23 @@ The distribution zip will be built at <code>build/weatherballoon.zip</code>
   - Basic configuration
   - JCE extensions workaround: Distribute binaries as two jar files instead of one
   - Create README.md file
+
+## Release 0.1.1:
+
+Features:
+
+  - Configurable capacity of main disk
+  - Show rclone progress
+  - Directories can be optionally excluded from rclone
+  - Optional spooling of jobs via tmux
+  - Display stderr of commands
+  - Clarify requirements for retry behavior
+  - Bring retry behavior closer to stated requirements
+
+Bug fixes:
+
+  - Fixed: global job timeout
+  - Fixed: don't fail if status file /var/log/userdata-done gets baked into AMI
 
 # Release Roadmap    
 

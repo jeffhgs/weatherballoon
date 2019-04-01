@@ -21,6 +21,7 @@ object config {
                           val roleOfInstance: String,
                           val keyPair: String,
                           val instanceType: String,
+                          val gbsizeOfMainDisk: Int,
                           val os: config.AwsOs
                         )
   {
@@ -33,12 +34,14 @@ object config {
                  adirLocal:String,
                  adirServer:String,
                  dirStorage:String,
-                 fileExcludes:String
+                 dirsToExclude:Seq[String]
                  )
 
   case class Remoter(
                       val provisioner: AwsProvisioner,
                       val tag: String,
+                      val minutesMaxRun: Int,
+                      val spooler: String,
                       val sync:Sync
                           )
   {

@@ -10,10 +10,13 @@
     },
     "instanceType": "t2.medium",
     "cred": null,
+    "gbsizeOfMainDisk": 40,
     "roleOfInstance":
       "arn:aws:iam::............:instance-profile/weatherballoon-ec2-accesses-s3all"
   },
   "tag": "Remoter",
+  "minutesMaxRun": 120,
+  "spooler": "tmux",
   "sync": {
     "adirLocal": null,
     "fileExcludes": null,
