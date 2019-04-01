@@ -75,6 +75,7 @@ object ExecUtil {
 
   def execViaSshImplJsch2(session:Session, spooler:String, command:String) : Try[Int] = {
     val tmpPumpOnce = new Array[Byte](1024)
+    val tmpPumpOnceErr = new Array[Byte](1024)
     //log.info("connected via jsch")
     val chan = session.openChannel("exec")
     // If we don't allocate a pty, sshd will not know to kill our process if we ctrl+C weatherballoon
@@ -88,11 +89,16 @@ object ExecUtil {
     val pout = new PipedInputStream(out)
     chan.setOutputStream(out)
 
+    val err = new PipedOutputStream()
+    val perr = new PipedInputStream(err)
+    chan.setExtOutputStream(err)
+
     //log.info("about to connect")
     chan.connect(10000)
     //log.info("about to pump")
     while(!chan.isClosed) {
       pumpOnce(pout, System.out, tmpPumpOnce)
+      pumpOnce(perr, System.out, tmpPumpOnceErr)
       //log.info("sleeping")
       Thread.sleep(1000)
     }
