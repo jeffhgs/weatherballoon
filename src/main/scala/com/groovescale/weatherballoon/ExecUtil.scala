@@ -23,7 +23,14 @@ object ExecUtil {
                   command:String
                 ) : Try[Int] =
   {
-    execViaSshImpl(hostname, username, pkfile, sConnectTimeout, spooler, command)
+    try {
+      val session: Session = sshsessionCreate(hostname, username, pkfile)
+      session.connect(30000) // making a connection with timeout.
+      return execViaSshImplJsch2(session, spooler, command)
+    } catch {
+      case ex: Throwable =>
+        return Failure(ex)
+    }
   }
 
   private def sshsessionCreate(hostname: String, username: String, pkfile: String) = {
@@ -35,26 +42,6 @@ object ExecUtil {
     val session = jsch.getSession(username, hostname, 22)
     session.setConfig(props)
     session
-  }
-
-  def execViaSshImpl(
-                      hostname:String,
-                      username:String,
-                      pkfile:String,
-                      //                fingerprint:String,
-                      sConnectTimeout : Int,
-                      spooler:String,
-                      command:String
-                    ) : Try[Int] =
-  {
-    try {
-      val session: Session = sshsessionCreate(hostname, username, pkfile)
-      session.connect(30000) // making a connection with timeout.
-      return execViaSshImplJsch2(session, spooler, command)
-    } catch {
-      case ex:Throwable =>
-        return Failure(ex)
-    }
   }
 
   def pumpOnce(in:InputStream, os:OutputStream, tmpPumpOnce:Array[Byte]) : Unit = {

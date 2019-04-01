@@ -154,6 +154,7 @@ object AwsProvisioner {
                     numTries: Int
                   ) : Try[Int] =
   {
+    // TODO: by specification, while we cannot retry our command, we can retry here
     AwsProvisioner.tryFindNode(provisioner, tag) match {
       case Some((node,addr)) =>
         val value = ExecUtil.execViaSsh(addr, provisioner.os.username, pkfile, sConnectTimeout, spooler, command)
