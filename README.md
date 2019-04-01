@@ -240,6 +240,23 @@ The distribution zip will be built at <code>build/weatherballoon.zip</code>
   - JCE extensions workaround: Distribute binaries as two jar files instead of one
   - Create README.md file
 
+## Release 0.1.1:
+
+Features:
+
+  - Configurable capacity of main disk
+  - Show rclone progress
+  - Directories can be optionally excluded from rclone
+  - Optional spooling of jobs via tmux
+  - Display stderr of commands
+  - Clarify requirements for retry behavior
+  - Bring retry behavior closer to stated requirements
+
+Bug fixes:
+
+  - Fixed: global job timeout
+  - Fixed: don't fail if status file /var/log/userdata-done gets baked into AMI
+
 # Release Roadmap    
 
 ## Future release 0.9: Error handling, configuration, and documentation
