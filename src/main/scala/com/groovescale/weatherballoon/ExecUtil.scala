@@ -21,13 +21,7 @@ object ExecUtil {
                   command:String
                 ) : Try[Int] =
   {
-    val res = execViaSshImpl(hostname, username, pkfile, sConnectTimeout, spooler, "touch /tmp/heartbeat")
-    res match {
-      case Success(0) =>
-        return execViaSshImpl(hostname, username, pkfile, sConnectTimeout, spooler, command)
-      case _ =>
-        return res
-    }
+    execViaSshImpl(hostname, username, pkfile, sConnectTimeout, spooler, command)
   }
 
   private def sshsessionCreate(hostname: String, username: String, pkfile: String) = {
