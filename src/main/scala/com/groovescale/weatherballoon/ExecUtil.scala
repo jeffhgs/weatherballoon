@@ -102,6 +102,8 @@ object ExecUtil {
       //log.info("sleeping")
       Thread.sleep(1000)
     }
+    pumpOnce(pout, System.out, tmpPumpOnce)
+    pumpOnce(perr, System.out, tmpPumpOnceErr)
     System.out.flush()
     //log.info("about to disconnect channel")
     if(chan.isConnected) {
