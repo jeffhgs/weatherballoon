@@ -7,6 +7,8 @@ import com.amazonaws.services.ec2.AmazonEC2Client
 import com.amazonaws.services.ec2.model._
 import org.slf4j.LoggerFactory
 
+import scala.util.{Success, Try}
+
 object AwsProvisioner {
   val log = LoggerFactory.getLogger(AwsProvisioner.getClass())
 
@@ -117,7 +119,7 @@ object AwsProvisioner {
                     spooler:String,
                     numTries: Int,
                     dryRun: Boolean
-                  ) =
+                  ) : Try[Int] =
   {
     var cTriesLeft = numTries
     var done = false
@@ -137,11 +139,10 @@ object AwsProvisioner {
               case scala.util.Failure(ex) =>
                 log.warn(ex.toString)
             }
+            return value
           }
           if (dryRun && value.isSuccess && value.get == 0) {
-            done = true
-          } else if (!dryRun && value.isSuccess) {
-            done = true
+            return value
           } else {
             Thread.sleep(msBetweenPolls)
           }
@@ -149,6 +150,7 @@ object AwsProvisioner {
           Thread.sleep(msBetweenPolls)
       }
     }
+    throw new ExecUtil.TooManyRetriesException(s"execAndRetry: command=${command}")
   }
 
   def runProvisioned(cmd0:Array[String], cfg:config.Remoter) = {
@@ -189,9 +191,14 @@ object AwsProvisioner {
               throw new RuntimeException("looks like we didn't succeed in making a node")
           }
       }
-      execAndRetry(cfg.provisioner, pkfile, "wc -c /var/log/userdata-done", cfg.tag, msBetweenPolls, sConnectTimeout, cfg.spooler, numTries, dryRun = true)
-      log.info(s"about to run cmd: ${cmd3}")
-      execAndRetry(cfg.provisioner, pkfile, cmd3, cfg.tag, msBetweenPolls, sConnectTimeout, cfg.spooler, numTries, dryRun = false)
+      val status = execAndRetry(cfg.provisioner, pkfile, "wc -c /var/log/userdata-done", cfg.tag, msBetweenPolls, sConnectTimeout, cfg.spooler, numTries, dryRun = true)
+      status match {
+        case Success(0) =>
+          log.info(s"about to run cmd: ${cmd3}")
+          execAndRetry(cfg.provisioner, pkfile, cmd3, cfg.tag, msBetweenPolls, sConnectTimeout, cfg.spooler, numTries, dryRun = false)
+        case _ =>
+          log.info(s"waiting for provisioning")
+      }
     } catch {
       case ex:Throwable =>
         val sw = new StringWriter()

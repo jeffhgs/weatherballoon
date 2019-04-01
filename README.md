@@ -49,6 +49,8 @@ Weatherballoon takes any local machine command line run/test command and efficie
 - Be efficient with:
     - Incurred fees for cloud resources
     - Wall clock time
+- In the presence of transient errors (networking, provisioning), never run a job more than once, but otherwise retry to ensure very high chance of a successful job attempt.
+- Interpret a job deciding to fail as a successful attempt
 
 # Installation
 

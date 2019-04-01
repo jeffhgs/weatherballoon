@@ -11,6 +11,8 @@ import scala.util.{Failure, Success, Try}
 object ExecUtil {
   val log = LoggerFactory.getLogger(ExecUtil.getClass())
 
+  class TooManyRetriesException(msg:String) extends RuntimeException(msg) {}
+
   def execViaSsh(
                   hostname:String,
                   username:String,
