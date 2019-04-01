@@ -16,6 +16,7 @@
   },
   "tag": "Remoter",
   "minutesMaxRun": 120,
+  "spooler": "tmux",
   "sync": {
     "adirLocal": null,
     "fileExcludes": null,

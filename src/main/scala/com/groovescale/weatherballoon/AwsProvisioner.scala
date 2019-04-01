@@ -114,6 +114,7 @@ object AwsProvisioner {
                     tag:String,
                     msBetweenPolls:Int,
                     sConnectTimeout:Int,
+                    spooler:String,
                     numTries: Int,
                     dryRun: Boolean
                   ) =
@@ -128,7 +129,7 @@ object AwsProvisioner {
       }
       AwsProvisioner.tryFindNode(provisioner, tag) match {
         case Some((node,addr)) =>
-          val value = ExecUtil.execViaSsh(addr, provisioner.os.username, pkfile, sConnectTimeout, command)
+          val value = ExecUtil.execViaSsh(addr, provisioner.os.username, pkfile, sConnectTimeout, spooler, command)
           if(!dryRun) {
             value match {
               case scala.util.Success(value) =>
@@ -156,6 +157,11 @@ object AwsProvisioner {
     val cmd2 =
       s"/usr/local/bin/with_sync_updown.sh ${cfg.minutesMaxRun} ${cfg.provisioner.nameOfRole} ${cfg.sync.dirStorage} ${cfg.sync.adirServer} ${idrun} " +
       s"/usr/local/bin/with_logging.sh ${cfg.sync.adirServer}/log/build.log ${cmd1}"
+    val cmd3 =
+      if(cfg.spooler == "tmux")
+        s"/usr/local/bin/spool_via_tmux.sh ${cmd2}"
+      else
+        cmd2
     val pkfile = cfg.kpFile()
 
     val numTries = 50
@@ -183,8 +189,9 @@ object AwsProvisioner {
               throw new RuntimeException("looks like we didn't succeed in making a node")
           }
       }
-      execAndRetry(cfg.provisioner, pkfile, "wc -c /var/log/userdata-done", cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = true)
-      execAndRetry(cfg.provisioner, pkfile, cmd2, cfg.tag, msBetweenPolls, sConnectTimeout, numTries, dryRun = false)
+      execAndRetry(cfg.provisioner, pkfile, "wc -c /var/log/userdata-done", cfg.tag, msBetweenPolls, sConnectTimeout, cfg.spooler, numTries, dryRun = true)
+      log.info(s"about to run cmd: ${cmd3}")
+      execAndRetry(cfg.provisioner, pkfile, cmd3, cfg.tag, msBetweenPolls, sConnectTimeout, cfg.spooler, numTries, dryRun = false)
     } catch {
       case ex:Throwable =>
         val sw = new StringWriter()

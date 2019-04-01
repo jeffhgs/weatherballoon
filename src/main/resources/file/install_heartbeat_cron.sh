@@ -141,6 +141,22 @@ sudo install /tmp/with_logging.sh /usr/local/bin/with_logging.sh
 rm -f /tmp/with_logging.sh
 
 
+cat > /tmp/spool_via_tmux.sh <<"EOF7"
+#!/bin/bash
+s=weatherballoon
+
+if ! tmux has-session -t "$s" 2>&-
+then
+  tmux new-session -d -n "$s" -s "$s"
+fi
+x="$@"
+tmux send-keys -t "$s" "$x"
+tmux send-keys -t "$s" Enter
+EOF7
+sudo install /tmp/spool_via_tmux.sh /usr/local/bin/spool_via_tmux.sh
+rm -f /tmp/spool_via_tmux.sh
+
+
 echo done >> /tmp/userdata-done
 install /tmp/userdata-done /var/log/userdata-done
 rm -f /tmp/userdata-done

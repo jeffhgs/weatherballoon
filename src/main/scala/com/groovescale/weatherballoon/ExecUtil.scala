@@ -17,13 +17,14 @@ object ExecUtil {
                   pkfile:String,
                   //                fingerprint:String,
                   sConnectTimeout : Int,
+                  spooler:String,
                   command:String
                 ) : Try[Int] =
   {
-    val res = execViaSshImpl(hostname, username, pkfile, sConnectTimeout, "touch /tmp/heartbeat")
+    val res = execViaSshImpl(hostname, username, pkfile, sConnectTimeout, spooler, "touch /tmp/heartbeat")
     res match {
       case Success(0) =>
-        return execViaSshImpl(hostname, username, pkfile, sConnectTimeout, command)
+        return execViaSshImpl(hostname, username, pkfile, sConnectTimeout, spooler, command)
       case _ =>
         return res
     }
@@ -46,13 +47,14 @@ object ExecUtil {
                       pkfile:String,
                       //                fingerprint:String,
                       sConnectTimeout : Int,
+                      spooler:String,
                       command:String
                     ) : Try[Int] =
   {
     try {
       val session: Session = sshsessionCreate(hostname, username, pkfile)
       session.connect(30000) // making a connection with timeout.
-      return execViaSshImplJsch2(session, command)
+      return execViaSshImplJsch2(session, spooler, command)
     } catch {
       case ex:Throwable =>
         return Failure(ex)
@@ -71,12 +73,13 @@ object ExecUtil {
     }
   }
 
-  def execViaSshImplJsch2(session:Session, command:String) : Try[Int] = {
+  def execViaSshImplJsch2(session:Session, spooler:String, command:String) : Try[Int] = {
     val tmpPumpOnce = new Array[Byte](1024)
     //log.info("connected via jsch")
     val chan = session.openChannel("exec")
     // If we don't allocate a pty, sshd will not know to kill our process if we ctrl+C weatherballoon
-    chan.asInstanceOf[ChannelExec].setPty(true)
+    chan.asInstanceOf[ChannelExec].setPty(!(spooler == "tmux"))
+
     //log.info(s"setting command: ${command}")
     chan.asInstanceOf[ChannelExec].setCommand(command)
     val is = chan.getInputStream

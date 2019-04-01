@@ -51,7 +51,7 @@ class TestAws extends JUnitSuite {
     val hostname = "ec2-54-186-244-37.us-west-2.compute.amazonaws.com"
     val sConnectTimeout = 10
     val cmd = "echo hello"
-    val value = ExecUtil.execViaSsh(hostname, cfg.provisioner.os.username, cfg.kpFile(), sConnectTimeout, cmd)
+    val value = ExecUtil.execViaSsh(hostname, cfg.provisioner.os.username, cfg.kpFile(), sConnectTimeout, cfg.spooler, cmd)
     value match {
       case scala.util.Success(value) =>
         // TODO: for logging, limit stdout and stderr to a maximum number of characters

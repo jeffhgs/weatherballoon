@@ -41,6 +41,7 @@ object config {
                       val provisioner: AwsProvisioner,
                       val tag: String,
                       val minutesMaxRun: Int,
+                      val spooler: String,
                       val sync:Sync
                           )
   {
