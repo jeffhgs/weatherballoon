@@ -130,6 +130,7 @@ object AwsProvisioner {
           val spooler = ""
           val value = ExecUtil.execViaSsh(addr, provisioner.os.username, pkfile, sConnectTimeout, spooler, command)
           if (value.isSuccess && value.get == 0) {
+            log.info(s"successfully provisioned node ${node} at ${addr}")
             return value
           } else {
             Thread.sleep(msBetweenPolls)
