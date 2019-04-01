@@ -112,11 +112,10 @@ An example <code>.weatherballoon.json</code> file is located in doc/sample_.weat
       },
       "tag": "Remoter",
       "minutesMaxRun": 120,
+      "spooler": "tmux",
       "sync": {
         "adirLocal": null,
-        "dirsToExclude": [
-          ".git/",  ".idea/",  "build/",  "out/",  ".gradle/"
-        ],
+        "fileExcludes": null,
         "adirServer": "/home/ubuntu/srchome",
         "dirStorage": "weatherballoon-test1"
       }
