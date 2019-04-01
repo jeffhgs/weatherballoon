@@ -63,6 +63,20 @@ object ExecUtil {
     // If we don't allocate a pty, sshd will not know to kill our process if we ctrl+C weatherballoon
     chan.asInstanceOf[ChannelExec].setPty(!(spooler == "tmux"))
 
+    // TODO: By specification we cannot retry our command.  However, we could greatly improve
+    // our chances of a successful command attempt as follows:
+    //   1) Connect with a piped stdin
+    //   2) Once connected, verify our ssh connection by running a placebo command
+    //   3) Drop the connection and fail if the placebo command doesn't work
+    //   4) Proceed to attempt our command.
+    // This way, we would only fail to attempt the command in the very unlikely case that
+    // we dropped our socket right between verifying the ssh connection and the command.
+    //
+    // What we currently do is basically the same, but we use two entirely different ssh
+    // connections.
+    //
+    // A downside of this approach would be to make it difficult to use stdin piping
+    // for some other reason.
     chan.asInstanceOf[ChannelExec].setCommand(command)
     val is = chan.getInputStream
 
