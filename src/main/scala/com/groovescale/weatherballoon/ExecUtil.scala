@@ -59,12 +59,10 @@ object ExecUtil {
   def execViaSshImplJsch2(session:Session, spooler:String, command:String) : Try[Int] = {
     val bufStdout = new Array[Byte](1024)
     val bufStderr = new Array[Byte](1024)
-    //log.info("connected via jsch")
     val chan = session.openChannel("exec")
     // If we don't allocate a pty, sshd will not know to kill our process if we ctrl+C weatherballoon
     chan.asInstanceOf[ChannelExec].setPty(!(spooler == "tmux"))
 
-    //log.info(s"setting command: ${command}")
     chan.asInstanceOf[ChannelExec].setCommand(command)
     val is = chan.getInputStream
 
@@ -76,27 +74,21 @@ object ExecUtil {
     val perr = new PipedInputStream(err)
     chan.setExtOutputStream(err)
 
-    //log.info("about to connect")
     chan.connect(10000)
-    //log.info("about to pump")
     while(!chan.isClosed) {
       pumpOnce(pout, System.out, bufStdout)
       pumpOnce(perr, System.out, bufStderr)
-      //log.info("sleeping")
       Thread.sleep(1000)
     }
     pumpOnce(pout, System.out, bufStdout)
     pumpOnce(perr, System.out, bufStderr)
     System.out.flush()
-    //log.info("about to disconnect channel")
     if(chan.isConnected) {
       chan.disconnect()
     }
-    //log.info("about to disconnect session")
     if(session.isConnected) {
       session.disconnect()
     }
-    //log.info(s"status ${chan.getExitStatus}")
     return Success(chan.getExitStatus)
   }
 
