@@ -114,7 +114,7 @@ dirStorage="$1"
 shift
 adirServer="$1"
 shift
-idbuild="$1"
+idrun="$1"
 shift
 
 /usr/local/bin/with_heartbeat.sh ${minutesMaxRun}m bash /usr/local/bin/with_instance_role.sh ${nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 sync mys3:${dirStorage}/srchome ${adirServer}
