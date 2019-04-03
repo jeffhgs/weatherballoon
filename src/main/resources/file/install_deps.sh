@@ -12,3 +12,5 @@ apt-get remove -y \
 apt-get install -y \
     openjdk-8-jre-headless \
     openjdk-8-jdk-headless
+
+/usr/bin/python3 /usr/bin/unattended-upgrade
