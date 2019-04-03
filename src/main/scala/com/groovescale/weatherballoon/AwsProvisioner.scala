@@ -35,6 +35,7 @@ object AwsProvisioner {
       .withSecurityGroups(provisioner.group1)
       .withUserData(encodedString)
       .withInstanceType(provisioner.instanceType)
+      .withEbsOptimized(true)
       .withBlockDeviceMappings(new BlockDeviceMapping()
         .withDeviceName("/dev/sda1")
         .withEbs(
