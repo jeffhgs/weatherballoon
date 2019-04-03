@@ -7,18 +7,60 @@ import com.groovescale.weatherballoon.AwsProvisioner.getClass
 object UserdataUtil {
   import scala.collection.JavaConverters._
 
-  private def getUserdataScript(res:String) : Seq[String] = {
-    val str = getClass().getResourceAsStream(res)
+  val q = "\""
+
+  private def noquote(v:String) = {
+    v.replaceAllLiterally("\"","")
+  }
+  private def genHeredoc(sh:Seq[String], fn0:String, eof:String, adirOut:String) : Seq[String] = {
+    val fn = noquote(fn0)
+    val shHeader = Seq(
+      s"cat > ${q}/tmp/${fn}${q} <<${q}${eof}${q}"
+    )
+    val shFooter = Seq(
+      eof,
+      s"install ${q}/tmp/${fn}${q} ${q}${adirOut}/${fn}${q}",
+      s"rm -f ${q}/tmp/${fn}${q}"
+    )
+    shHeader ++ sh ++ shFooter
+  }
+
+  private def genVar(name:String, v:String) = {
+    s"${name}=${q}${noquote(v)}${q}"
+  }
+
+  case class Script(
+                   val res:String,
+                   val eof:String,
+                   val vs:Seq[(String,String)]
+                   )
+
+  def getUserdataScript(script:Script) : Seq[String] = {
+    val str = getClass().getResourceAsStream("/file/"+script.res)
     val r = new BufferedReader(new InputStreamReader(str))
     r.lines().iterator().asScala.toSeq
   }
 
-  def getUserdataScriptRaw() : Seq[String] = {
-    val scriptBig = Seq(
-      "/file/install_deps.sh",
-      "/file/install_heartbeat_cron.sh"
+  def genUserdataScript(adirOut:String)(script:Script) : Seq[String] = {
+    val init = script.vs.map(x => genVar(x._1, x._2))
+    val lines = getUserdataScript(script)
+    genHeredoc(init ++ lines, script.res, script.eof, adirOut)
+  }
+
+  def getUserdataScriptRaw(adirOut:String) : Seq[String] = {
+    val scriptHeredoc = Seq(
+      Script("heartbeat.sh","EOF1X",Seq(("numMinutes","15"))),
+      Script("with_heartbeat.sh","EOF2X",Seq()),
+      Script("with_instance_role.sh","EOF3X",Seq()),
+      Script("rclone.sh","EOF4X",Seq()),
+      Script("with_logging.sh","EOF5X",Seq()),
+      Script("with_sync_updown.sh","EOF6X",Seq())
+    ).flatMap(genUserdataScript(adirOut))
+    val scriptRun = Seq(
+      Script("install_deps.sh", "EOF8X", Seq()),
+      Script("install_heartbeat_cron.sh", "EOF9X", Seq())
     ).flatMap(getUserdataScript)
-    val lines = (Seq("#!/usr/bin/env bash") ++ scriptBig)
+    val lines = (Seq("#!/usr/bin/env bash") ++ scriptHeredoc ++ scriptRun)
     lines
   }
 }

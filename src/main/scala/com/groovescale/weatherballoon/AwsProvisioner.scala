@@ -22,7 +22,7 @@ object AwsProvisioner {
     import java.nio.charset.StandardCharsets
     import java.util.Base64
     val encoder = Base64.getEncoder
-    val normalString = UserdataUtil.getUserdataScriptRaw().mkString("\n")
+    val normalString = UserdataUtil.getUserdataScriptRaw("/usr/local/bin").mkString("\n")
     val encodedString = encoder.encodeToString(normalString.getBytes(StandardCharsets.UTF_8))
 
     runInstancesRequest
