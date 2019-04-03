@@ -17,3 +17,4 @@ mkdir -p ${adirServer}/log
 cd ${adirServer}
 /usr/local/bin/with_heartbeat.sh ${minutesMaxRun}m "$@"
 /usr/local/bin/with_heartbeat.sh ${minutesMaxRun}m bash /usr/local/bin/with_instance_role.sh ${nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 copy ${adirServer}/log mys3:${dirStorage}/log/${idrun}
+/usr/local/bin/with_heartbeat.sh ${minutesMaxRun}m bash /usr/local/bin/with_instance_role.sh ${nameOfRole} /usr/local/bin/rclone.sh --s3-region us-west-2 copy ${adirServer} mys3:${dirStorage}/out
