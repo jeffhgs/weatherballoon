@@ -112,6 +112,7 @@ An example <code>.weatherballoon.json</code> file is located in doc/sample_.weat
       },
       "tag": "Remoter",
       "minutesMaxRun": 120,
+      "minutesMaxIdle": 15,
       "spooler": "tmux",
       "sync": {
         "adirLocal": null,

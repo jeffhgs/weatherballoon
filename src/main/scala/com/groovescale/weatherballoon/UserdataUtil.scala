@@ -47,9 +47,9 @@ object UserdataUtil {
     genHeredoc(init ++ lines, script.res, script.eof, adirOut)
   }
 
-  def genUserdataForWeatherballoon(adirOut:String) : Seq[String] = {
+  def genUserdataForWeatherballoon(adirOut:String, minutesMaxIdle:Int) : Seq[String] = {
     val scriptHeredoc = Seq(
-      Script("heartbeat.sh","EOF1X",Seq(("numMinutes","15"))),
+      Script("heartbeat.sh","EOF1X",Seq(("numMinutes",minutesMaxIdle.toString))),
       Script("with_heartbeat.sh","EOF2X",Seq()),
       Script("with_instance_role.sh","EOF3X",Seq()),
       Script("rclone.sh","EOF4X",Seq()),

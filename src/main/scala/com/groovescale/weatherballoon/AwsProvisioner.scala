@@ -16,13 +16,14 @@ object AwsProvisioner {
 
   def provisionViaAws(
                        provisioner: config.AwsProvisioner,
-                       tag: String
+                       tag: String,
+                       minutesMaxIdle:Int
                      ) = {
     val runInstancesRequest = new RunInstancesRequest();
     import java.nio.charset.StandardCharsets
     import java.util.Base64
     val encoder = Base64.getEncoder
-    val normalString = UserdataUtil.genUserdataForWeatherballoon("/usr/local/bin").mkString("\n")
+    val normalString = UserdataUtil.genUserdataForWeatherballoon("/usr/local/bin", minutesMaxIdle).mkString("\n")
     val encodedString = encoder.encodeToString(normalString.getBytes(StandardCharsets.UTF_8))
 
     runInstancesRequest
@@ -198,7 +199,7 @@ object AwsProvisioner {
         case None =>
           // presume we should make a node
           log.info("looks like we should make a node")
-          provisionViaAws(cfg.provisioner, cfg.tag)
+          provisionViaAws(cfg.provisioner, cfg.tag, cfg.minutesMaxIdle)
           Thread.sleep(10000)
           tryFindNode(cfg.provisioner, cfg.tag) match {
             case Some((node, addr)) =>
