@@ -42,9 +42,14 @@ object UserdataUtil {
   }
 
   def genScript(adirOut:String)(script:Script) : Seq[String] = {
+    val shebang =
+      if(script.vs.isEmpty)
+        Seq()
+      else
+        Seq("#!/bin/bash")
     val init = script.vs.map(x => genVar(x._1, x._2))
     val lines = getScriptFromResource(script)
-    genHeredoc(init ++ lines, script.res, script.eof, adirOut)
+    genHeredoc(shebang ++ init ++ lines, script.res, script.eof, adirOut)
   }
 
   def genUserdataForWeatherballoon(adirOut:String, minutesMaxIdle:Int) : Seq[String] = {
