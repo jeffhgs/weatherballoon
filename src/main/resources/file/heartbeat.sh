@@ -1,9 +1,7 @@
-#!/bin/bash
 set -e
 
 afileHeartbeat="/tmp/heartbeat"
 afileLog="/var/log/heartbeat.log"
-numMinutes=15
 afileGfind="/usr/bin/find"
 cmdShutdown=(/sbin/shutdown --poweroff now)
 
