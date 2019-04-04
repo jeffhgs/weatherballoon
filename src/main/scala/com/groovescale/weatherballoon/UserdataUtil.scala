@@ -54,7 +54,8 @@ object UserdataUtil {
       Script("with_instance_role.sh","EOF3X",Seq()),
       Script("rclone.sh","EOF4X",Seq()),
       Script("with_logging.sh","EOF5X",Seq()),
-      Script("with_sync_updown.sh","EOF6X",Seq())
+      Script("with_sync_updown.sh","EOF6X",Seq()),
+      Script("spool_via_tmux.sh","EOF7X",Seq())
     ).flatMap(genScript(adirOut))
     val scriptRun = Seq(
       Script("install_deps.sh", "EOF8X", Seq()),
