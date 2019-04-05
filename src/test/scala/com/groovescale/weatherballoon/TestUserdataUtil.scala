@@ -4,7 +4,7 @@ import java.io.{BufferedWriter, FileWriter}
 import java.nio.file.Path
 import java.nio.file.Files
 
-import com.groovescale.weatherballoon.UserdataUtil.{Script, genScript, getScriptFromResource}
+import com.groovescale.weatherballoon.UserdataUtil.{Script, genScriptHeredoc, getScriptFromResource}
 import com.groovescale.weatherballoon._
 import org.scalatest.junit.JUnitSuite
 
@@ -27,7 +27,7 @@ class TestUserdataUtil extends JUnitSuite {
   def genScriptForTest(adirOut:String) : Seq[String] = {
     val scriptHeredoc = Seq(
       Script("customized.sh","EOF1X",Seq(("message","hello")))
-    ).flatMap(genScript(adirOut))
+    ).flatMap(genScriptHeredoc(adirOut))
     val scriptRun = Seq(
       Script("check_customized.sh", "EOF2X", Seq())
     ).flatMap(getScriptFromResource)

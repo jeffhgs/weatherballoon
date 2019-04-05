@@ -52,7 +52,7 @@ object UserdataUtil {
     (shebang ++ init ++ lines)
   }
 
-  def genScript(adirOut:String)(script:Script) : Seq[String] = {
+  def genScriptHeredoc(adirOut:String)(script:Script) : Seq[String] = {
     val lines = genScriptOnly(script)
     genHeredoc(lines, script.res, script.eof, adirOut)
   }
@@ -66,7 +66,7 @@ object UserdataUtil {
       Script("with_logging.sh","EOF5X",Seq()),
       Script("with_sync_updown.sh","EOF6X",Seq()),
       Script("spool_via_tmux.sh","EOF7X",Seq())
-    ).flatMap(genScript(adirOut))
+    ).flatMap(genScriptHeredoc(adirOut))
     val scriptRun = Seq(
       Script("install_deps.sh", "EOF8X", Seq(("afileDone", config.Hardcoded.afileDone))),
       Script("install_heartbeat_cron.sh", "EOF9X", Seq(("afileDone", config.Hardcoded.afileDone)))
