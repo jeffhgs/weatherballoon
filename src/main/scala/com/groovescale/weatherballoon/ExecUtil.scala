@@ -11,6 +11,8 @@ import scala.util.{Failure, Success, Try}
 object ExecUtil {
   val log = LoggerFactory.getLogger(ExecUtil.getClass())
 
+  val sizeOfBuffer = 1024
+
   class TooManyRetriesException(msg:String) extends RuntimeException(msg) {}
 
   def execViaSsh(
@@ -47,7 +49,7 @@ object ExecUtil {
   def pumpOnce(in:InputStream, os:OutputStream, tmpPumpOnce:Array[Byte]) : Unit = {
     while(in.available > 0) {
       //log.info("trying to read")
-      val i = in.read(tmpPumpOnce, 0, 1024)
+      val i = in.read(tmpPumpOnce, 0, sizeOfBuffer)
       if (i < 0) {
         log.info("available input has no input.  Error?")
         return
@@ -57,8 +59,8 @@ object ExecUtil {
   }
 
   def execViaSshImplJsch2(session:Session, spooler:String, command:String) : Try[Int] = {
-    val bufStdout = new Array[Byte](1024)
-    val bufStderr = new Array[Byte](1024)
+    val bufStdout = new Array[Byte](sizeOfBuffer)
+    val bufStderr = new Array[Byte](sizeOfBuffer)
     val chan = session.openChannel("exec")
     // If we don't allocate a pty, sshd will not know to kill our process if we ctrl+C weatherballoon
     chan.asInstanceOf[ChannelExec].setPty(!(spooler == "tmux"))
