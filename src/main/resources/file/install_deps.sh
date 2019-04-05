@@ -1,5 +1,5 @@
 # TODO: better fix for userdata-done baked into the AMI
-rm -f "/var/log/userdata-done"
+rm -f "$afileDone"
 
 apt-get update
 apt-get install -y \

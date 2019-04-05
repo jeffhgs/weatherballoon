@@ -92,7 +92,7 @@ object ExecUtil {
     while(!chan.isClosed) {
       pumpOnce(pout, System.out, bufStdout)
       pumpOnce(perr, System.out, bufStderr)
-      Thread.sleep(1000)
+      Thread.sleep(20)
     }
     pumpOnce(pout, System.out, bufStdout)
     pumpOnce(perr, System.out, bufStderr)

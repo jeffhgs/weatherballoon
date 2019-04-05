@@ -57,4 +57,8 @@ object config {
     + FieldSerializer[AwsCred]()
     + FieldSerializer[AwsOs]()
     + FieldSerializer[Remoter]())
+
+  object Hardcoded {
+    val afileDone = "/var/log/userdata-done"
+  }
 }

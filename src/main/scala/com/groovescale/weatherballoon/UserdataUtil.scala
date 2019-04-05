@@ -63,8 +63,8 @@ object UserdataUtil {
       Script("spool_via_tmux.sh","EOF7X",Seq())
     ).flatMap(genScript(adirOut))
     val scriptRun = Seq(
-      Script("install_deps.sh", "EOF8X", Seq()),
-      Script("install_heartbeat_cron.sh", "EOF9X", Seq())
+      Script("install_deps.sh", "EOF8X", Seq(("afileDone", config.Hardcoded.afileDone))),
+      Script("install_heartbeat_cron.sh", "EOF9X", Seq(("afileDone", config.Hardcoded.afileDone)))
     ).flatMap(getScriptFromResource)
     val lines = (Seq("#!/usr/bin/env bash") ++ scriptHeredoc ++ scriptRun)
     lines

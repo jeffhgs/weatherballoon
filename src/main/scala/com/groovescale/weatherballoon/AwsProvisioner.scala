@@ -210,7 +210,8 @@ object AwsProvisioner {
               throw new RuntimeException("looks like we didn't succeed in making a node")
           }
       }
-      val status = waitForProvisioning(cfg.provisioner, pkfile, "grep -c done /var/log/userdata-done", cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
+      val cmdCheckDone = "grep -c done " + "\"" + config.Hardcoded.afileDone + "\""
+      val status = waitForProvisioning(cfg.provisioner, pkfile, cmdCheckDone, cfg.tag, msBetweenPolls, sConnectTimeout, numTries)
       status match {
         case Success(0) =>
           log.info(s"about to run cmd: ${cmd3}")
