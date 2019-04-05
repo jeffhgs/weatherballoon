@@ -70,7 +70,7 @@ object UserdataUtil {
     val scriptRun = Seq(
       Script("install_deps.sh", "EOF8X", Seq(("afileDone", config.Hardcoded.afileDone))),
       Script("install_heartbeat_cron.sh", "EOF9X", Seq(("afileDone", config.Hardcoded.afileDone)))
-    ).flatMap(getScriptFromResource)
+    ).flatMap(genScriptOnly)
     val lines = (Seq("#!/usr/bin/env bash") ++ scriptHeredoc ++ scriptRun)
     lines
   }
