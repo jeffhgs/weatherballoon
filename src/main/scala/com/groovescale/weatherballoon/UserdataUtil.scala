@@ -41,15 +41,20 @@ object UserdataUtil {
     r.lines().iterator().asScala.toSeq
   }
 
-  def genScript(adirOut:String)(script:Script) : Seq[String] = {
+  def genScriptOnly(script: Script) = {
     val shebang =
-      if(script.vs.isEmpty)
+      if (script.vs.isEmpty)
         Seq()
       else
         Seq("#!/bin/bash")
     val init = script.vs.map(x => genVar(x._1, x._2))
     val lines = getScriptFromResource(script)
-    genHeredoc(shebang ++ init ++ lines, script.res, script.eof, adirOut)
+    (shebang ++ init ++ lines)
+  }
+
+  def genScript(adirOut:String)(script:Script) : Seq[String] = {
+    val lines = genScriptOnly(script)
+    genHeredoc(lines, script.res, script.eof, adirOut)
   }
 
   def genUserdataForWeatherballoon(adirOut:String, minutesMaxIdle:Int) : Seq[String] = {
