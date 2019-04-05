@@ -59,6 +59,6 @@ object config {
     + FieldSerializer[Remoter]())
 
   object Hardcoded {
-    val afileDone = "/var/log/userdata-done"
+    val afileDone = "/var/log/userdata-done-2"
   }
 }
