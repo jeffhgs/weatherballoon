@@ -11,6 +11,7 @@ import scala.util.{Failure, Success, Try}
 object ExecUtil {
   val log = LoggerFactory.getLogger(ExecUtil.getClass())
 
+  val sizeOfPipedBuffer = 102400
   val sizeOfBuffer = 1024
 
   class TooManyRetriesException(msg:String) extends RuntimeException(msg) {}
@@ -83,11 +84,11 @@ object ExecUtil {
     val is = chan.getInputStream
 
     val out = new PipedOutputStream()
-    val pout = new PipedInputStream(out)
+    val pout = new PipedInputStream(out, sizeOfPipedBuffer)
     chan.setOutputStream(out)
 
     val err = new PipedOutputStream()
-    val perr = new PipedInputStream(err)
+    val perr = new PipedInputStream(err, sizeOfPipedBuffer)
     chan.setExtOutputStream(err)
 
     chan.connect(10000)
