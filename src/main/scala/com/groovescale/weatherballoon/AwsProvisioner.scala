@@ -100,10 +100,10 @@ object AwsProvisioner {
     )
     if (nodesRemoter1.nonEmpty) {
       val node = nodesRemoter1.head
-      node.publicAddresses.toArray match {
-        case Array(addr: String, _*) =>
+      node.publicAddresses match {
+        case Seq(addr: String, _*) =>
           Some((node, addr))
-        case Array() =>
+        case Seq() =>
           None
       }
     } else
